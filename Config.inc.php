@@ -12,7 +12,7 @@ return array(
 	//模块简介
 	'introduce' => '导入与导出Excel',
 	//模块介绍地址
-	'address' => 'http://ztbcms.com',
+	'address' => 'http://doc.ztbcms.com/module/transport/',
 	//模块作者
 	'author' => 'Jayin',
 	//作者地址
