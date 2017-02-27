@@ -22,7 +22,7 @@ return array(
 	//版本号，请不要带除数字外的其他字符
 	'version' => '1.0.1.0',
 	//适配最低ZtbCMS版本，
-	'adaptation' => '2.0.0.0',
+	'adaptation' => '3.0.0.0',
 	//签名
 	'sign' => '2fa528afab8210bbcaf5ce73e03a0555',
 	//依赖模块
