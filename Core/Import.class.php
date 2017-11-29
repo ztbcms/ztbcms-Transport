@@ -6,6 +6,8 @@
 
 namespace Transport\Core;
 
+use Transport\Model\TransportTaskLogModel;
+
 /**
  * 导入Excel表格核心实现类
  *
@@ -41,10 +43,18 @@ class Import {
      */
     private $excel_data = [];
 
-    public function __construct() {
+    /**
+     * 任务日志ID
+     * @var string
+     */
+    private $task_log_id;
+
+    public function __construct($task_log_id = '') {
         include(APP_PATH . '/Transport/Libs/PHPExcel.php');
 
         $this->phpexcel = new \PHPExcel();
+
+        $this->task_log_id = $task_log_id;
     }
 
     /**
@@ -250,6 +260,44 @@ class Import {
      */
     public function setFilename($filename) {
         $this->filename = $filename;
+    }
+
+    private function onStartLoadData(){
+        if(!empty($this->task_log_id)){
+            M('TransportTaskLog')->where(['id' => $this->task_log_id])->save(['process_status' => TransportTaskLogModel::PROCESS_STATUS_PRICESSING]);
+        }
+    }
+
+    /**
+     * 加载完数据项的回调
+     */
+    private function onLoadedData() {
+        if(!empty($this->task_log_id)){
+            //导入项数
+            $total_amount = count($this->getImportData());
+            M('TransportTaskLog')->where(['id' => $this->task_log_id])->save(['total_amount' => $total_amount]);
+        }
+    }
+
+    private function onStartHandleRowData(){
+        if(!empty($this->task_log_id)){
+            M('TransportTaskLog')->where(['id' => $this->task_log_id])->setInc('progress', 1);
+        }
+    }
+
+    /**
+     * 处理完当前行数据后的回调
+     */
+    private function onHandledRowData(){
+        if(!empty($this->task_log_id)){
+            M('TransportTaskLog')->where(['id' => $this->task_log_id])->setInc('success_amount', 1);
+        }
+    }
+
+    private function onFinishImport(){
+        if(!empty($this->task_log_id)){
+            M('TransportTaskLog')->where(['id' => $this->task_log_id])->save(['process_status' => TransportTaskLogModel::PROCESS_STATUS_FINISH]);
+        }
     }
 
 }
