@@ -236,7 +236,7 @@ class IndexController extends AdminBase {
             }
         } else {
             //导入
-            $import = new Import();
+            $import = new Import($task_log_id);
 
             $import->setModel($task['model']);
 

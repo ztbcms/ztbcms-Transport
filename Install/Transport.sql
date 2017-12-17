@@ -39,6 +39,10 @@ CREATE TABLE `cms_transport_task_log` (
   `progress` int(11) NOT NULL COMMENT '当前进行数',
   `total_amount` int(11) NOT NULL COMMENT '总数',
   `success_amount` int(11) NOT NULL COMMENT '成功数',
+  `start_transport_time` int(11) NOT NULL COMMENT '开始处理时时间',
+  `end_transport_time` int(11) NOT NULL COMMENT '结束处理时间',
+  `use_time` int(11) NOT NULL COMMENT '耗时',
+  `result_file` varchar(256) NOT NULL DEFAULT '' COMMENT '结果文件路径',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

@@ -13,7 +13,7 @@ use Transport\Model\TransportTaskLogModel;
  *
  * @package Transport\Core
  */
-class Import {
+class Import extends Transport {
 
     //模型名称(一般为不含前缀的表名)
     protected $model = '';
@@ -45,6 +45,7 @@ class Import {
 
     /**
      * 任务日志ID
+     *
      * @var string
      */
     private $task_log_id;
@@ -61,27 +62,40 @@ class Import {
      * 导入表格
      */
     function importTable() {
+        $this->onStartHandleData();
         $this->importHeaders();
         $this->importRows();
+        $this->onFinishHandleData();
     }
 
     /**
      * 导入数据
      */
     public function importData() {
+        $this->onStartHandleData();
+
         $db = M($this->getModel());
         if (!empty($this->data)) {
             foreach ($this->data as $index => $data) {
                 //TODO 可以配置导入策略：1. 若有相同，覆盖导入 2. 若有相同忽略导入 （目前默认1,以主键为唯一表示）
                 //TODO 检测哪一些导入成功，哪一些失败了
 
+                $this->onStartHandleRowData();
                 $pk = $db->getPk();
                 if (isset($data[$pk])) {
                     unset($data[$pk]);
                 }
-                $db->add($data);
+                $res = $db->add($data);
+                if ($res) {
+                    $this->success_data[] = $data;
+                } else {
+                    $this->fail_data[] = $data;
+                }
+                $this->onFinishHandlRowData();
             }
         }
+
+        $this->onFinishHandleData();
     }
 
     /**
@@ -143,6 +157,7 @@ class Import {
      * 加载Excel数据
      */
     public function loadExcelData() {
+        $this->onStartLoadData();
         if (empty($this->excel_data)) {
             $objReader = \PHPExcel_IOFactory::createReader('Excel5');
             $objPHPExcel = $objReader->load($this->filename);
@@ -159,6 +174,8 @@ class Import {
 
             $this->setImportData($excelData);
         }
+
+        $this->onFinishLoadData();
     }
 
     /**
@@ -168,26 +185,35 @@ class Import {
         $content = '<table>';
 
         foreach ($this->data as $index => $row) {
-            $content .= '<tr>';
 
+            $this->onStartHandleRowData();
+
+            $content .= '<tr>';
             foreach ($row as $i => $cell) {
                 $content .= '<td>' . $cell . '</td>';
             }
             $content .= '</tr>';
+
+            $this->success_data[] = $row;
+
+            $this->onFinishHandlRowData();
         }
         $content .= '</table>';
         echo $content;
-        exit();
     }
 
     /**
      * 导入XLS数据，但不插入到数据库，做阅览
      */
     public function exportTable() {
+        $this->onStartTransport();
+
         $this->loadExcelData();
         $this->importTable();
 
         $this->previewTable();
+        $this->onFinishTransport();
+        exit();
     }
 
 
@@ -195,11 +221,12 @@ class Import {
      * 开始导入
      */
     public function import() {
-
+        $this->onStartTransport();
         $this->loadExcelData();
         $this->importTable();
 
         $this->importData();
+        $this->onFinishTransport();
     }
 
     /**
@@ -262,25 +289,58 @@ class Import {
         $this->filename = $filename;
     }
 
-    private function onStartLoadData(){
-        if(!empty($this->task_log_id)){
-            M('TransportTaskLog')->where(['id' => $this->task_log_id])->save(['process_status' => TransportTaskLogModel::PROCESS_STATUS_PRICESSING]);
+    /**
+     * 传输处理开始
+     *
+     * @return mixed
+     */
+    protected function onStartTransport() {
+        if (!empty($this->task_log_id)) {
+            M('TransportTaskLog')->where(['id' => $this->task_log_id])->save([
+                'process_status' => TransportTaskLogModel::PROCESS_STATUS_PRICESSING,
+                'start_transport_time' => time(),
+                'update_time' => time()
+            ]);
+        }
+    }
+
+    /**
+     * 开始加载数据
+     */
+    protected function onStartLoadData() {
+        if (!empty($this->task_log_id)) {
+
         }
     }
 
     /**
      * 加载完数据项的回调
      */
-    private function onLoadedData() {
-        if(!empty($this->task_log_id)){
+    protected function onFinishLoadData() {
+        if (!empty($this->task_log_id)) {
             //导入项数
-            $total_amount = count($this->getImportData());
-            M('TransportTaskLog')->where(['id' => $this->task_log_id])->save(['total_amount' => $total_amount]);
+            $total_amount = count($this->getImportData()) - 1; //第一行为表头
+            M('TransportTaskLog')->where(['id' => $this->task_log_id])->save([
+                'total_amount' => $total_amount,
+                'update_time' => time()
+            ]);
         }
     }
 
-    private function onStartHandleRowData(){
-        if(!empty($this->task_log_id)){
+    /**
+     * 开始处理数据操作(导出，导入)
+     *
+     * @return mixed
+     */
+    protected function onStartHandleData() {
+        M('TransportTaskLog')->where(['id' => $this->task_log_id])->save(['progress' => 0, 'update_time' => time()]);
+    }
+
+    /**
+     * 开始处理单行数据
+     */
+    protected function onStartHandleRowData() {
+        if (!empty($this->task_log_id)) {
             M('TransportTaskLog')->where(['id' => $this->task_log_id])->setInc('progress', 1);
         }
     }
@@ -288,16 +348,41 @@ class Import {
     /**
      * 处理完当前行数据后的回调
      */
-    private function onHandledRowData(){
-        if(!empty($this->task_log_id)){
-            M('TransportTaskLog')->where(['id' => $this->task_log_id])->setInc('success_amount', 1);
+    protected function onFinishHandlRowData() {
+        if (!empty($this->task_log_id)) {
+            M('TransportTaskLog')->where(['id' => $this->task_log_id])->save([
+                'success_amount' => count($this->success_data),
+                'update_time' => time()
+            ]);
         }
     }
 
-    private function onFinishImport(){
-        if(!empty($this->task_log_id)){
-            M('TransportTaskLog')->where(['id' => $this->task_log_id])->save(['process_status' => TransportTaskLogModel::PROCESS_STATUS_FINISH]);
+    /**
+     * 数据处理操作(导出，导入)完成
+     *
+     * @return mixed
+     */
+    protected function onFinishHandleData() {
+        // TODO: Implement onFinishHandleData() method.
+    }
+
+
+    /**
+     * 数据传输结束
+     */
+    protected function onFinishTransport() {
+        if (!empty($this->task_log_id)) {
+            $log = M('TransportTaskLog')->where(['id' => $this->task_log_id])->find();
+            $now = time();
+            $duration = $now - $log['start_transport_time'];
+            M('TransportTaskLog')->where(['id' => $this->task_log_id])->save([
+                'process_status' => TransportTaskLogModel::PROCESS_STATUS_FINISH,
+                'end_transport_time' => $now,
+                'use_time' => $duration,
+                'update_time' => time()
+            ]);
         }
     }
+
 
 }
