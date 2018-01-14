@@ -11,7 +11,7 @@ namespace Transport\Core;
  *
  * @package Transport\Core
  */
-class Export {
+class Export extends Transport {
 
     //导出模型名称(一般为不含前缀的表名)
     protected $model = '';
@@ -42,17 +42,13 @@ class Export {
      * @var null|\PHPExcel
      */
     private $phpexcel = null;
-    /**
-     * Excel数据
-     *
-     * @var array
-     */
-    private $excel_data = [];
 
-    public function __construct() {
+    public function __construct($task_log_id = '') {
         include(APP_PATH . '/Transport/Libs/PHPExcel.php');
 
         $this->phpexcel = new \PHPExcel();
+
+        $this->task_log_id = $task_log_id;
     }
 
     /**
@@ -113,7 +109,9 @@ class Export {
 
         $content_header .= '</tr>';
 
-        $this->excel_data[] = $excel_headers;
+        $excel_data = $this->getExcelData();
+        $excel_data[] = $excel_headers;
+        $this->setExcelData($excel_data);
 
         return $content_header;
     }
@@ -146,7 +144,10 @@ class Export {
         }
 
         $row .= '</tr>';
-        $this->excel_data[] = $excel_row;
+
+        $excel_data = $this->getExcelData();
+        $excel_data[] = $excel_data;
+        $this->setExcelData($excel_data);
 
         return $row;
     }
@@ -188,18 +189,40 @@ class Export {
         return $this->_content;
     }
 
+    private function processData(){
+       //TODO 处理数据
+    }
+
     /**
      * 生成 XLS 文件
      */
     public function exportXls() {
+        $this->onStartTransport();
 
-        $this->exportTable();
+        //先提取数据
+        $this->onStartLoadData();
+        $data = $this->getData();
+        if (empty($data)) {
+            $data = $this->getExportData();
+            $this->setData($data);
+        }
+        $this->onFinishLoadData();
+
+        //开始处理数据
+        $this->onStartHandleData();
+
+        $this->exportHeaders($this->fields);
+        $this->exportRows();
 
         //设置表格
         $this->phpexcel->getProperties()->setCreator($this->filterString)->setLastModifiedBy('ZTBCMS')->setTitle("Office 2007 XLSX Document")->setSubject("Office 2007 XLSX Document")->setDescription("Document for Office 2007 XLSX, generated using PHP classes.")->setKeywords("office 2007 openxml php")->setCategory("ZTBCMS");
 
         //填充数据
-        foreach ($this->excel_data as $key => $row) {
+        $excel_data = $this->getExcelData();
+        foreach ($excel_data as $key => $row) {
+
+            $this->onStartHandleRowData();
+
             $num = $key + 1;
             $i = 0;
             foreach ($row as $key2 => $value2) {
@@ -208,6 +231,8 @@ class Export {
                     $value2);
                 $i++;
             }
+
+            $this->onFinishHandlRowData();
         }
 
         //设置表格并输出
@@ -222,8 +247,14 @@ class Export {
         header('Pragma: public'); // HTTP/1.0
         $objWriter = \PHPExcel_IOFactory::createWriter($this->phpexcel, 'Excel5');
         $objWriter->save('php://output');
+
+        $this->onFinishHandleData();
+
+        $this->onFinishTransport();
         exit;
     }
+
+
 
     /**
      * @return array
