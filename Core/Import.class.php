@@ -6,8 +6,6 @@
 
 namespace Transport\Core;
 
-use Transport\Model\TransportTaskLogModel;
-
 /**
  * 导入Excel表格核心实现类
  *
@@ -36,12 +34,7 @@ class Import extends Transport {
      * @var null|\PHPExcel
      */
     private $phpexcel = null;
-    /**
-     * Excel数据
-     *
-     * @var array
-     */
-    private $excel_data = [];
+
 
     public function __construct($task_log_id = '') {
         include(APP_PATH . '/Transport/Libs/PHPExcel.php');
@@ -97,7 +90,10 @@ class Import extends Transport {
      * @return mixed
      */
     private function importHeaders() {
-        return array_shift($this->excel_data);
+        $excel_data = $this->getExcelData();
+        array_shift($excel_data);
+        $this->setExcelData($excel_data);
+        return $excel_data;
     }
 
     /**
@@ -139,7 +135,8 @@ class Import extends Transport {
      * @return array
      */
     private function importRows() {
-        foreach ($this->excel_data as $index => $row_data) {
+        $excel_data = $this->getExcelData();
+        foreach ($excel_data as $index => $row_data) {
             $this->data[] = $this->importRow($row_data);
         }
 
@@ -151,7 +148,7 @@ class Import extends Transport {
      */
     public function loadExcelData() {
         $this->onStartLoadData();
-        if (empty($this->excel_data)) {
+        if (empty($this->getExcelData())) {
             $objReader = \PHPExcel_IOFactory::createReader('Excel5');
             $objPHPExcel = $objReader->load($this->filename);
             $objWorksheet = $objPHPExcel->getActiveSheet();
@@ -165,7 +162,7 @@ class Import extends Transport {
                 }
             }
 
-            $this->setImportData($excelData);
+            $this->setExcelData($excelData);
         }
 
         $this->onFinishLoadData();
@@ -248,24 +245,6 @@ class Import extends Transport {
      */
     public function setFields(array $fields) {
         $this->fields = $fields;
-    }
-
-    /**
-     * 获取数据
-     *
-     * @return array|mixed
-     */
-    public function getImportData() {
-        return $this->excel_data;
-    }
-
-    /**
-     * 设置导入数据
-     *
-     * @param array $excel_data
-     */
-    public function setImportData(array $excel_data) {
-        $this->excel_data = $excel_data;
     }
 
     /**

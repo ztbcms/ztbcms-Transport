@@ -14,6 +14,13 @@ use Transport\Model\TransportTaskLogModel;
 class Transport {
 
     /**
+     * Excel数据
+     *
+     * @var array
+     */
+    private $excel_data = [];
+
+    /**
      * 成功导入的数据
      * @var array
      */
@@ -29,6 +36,20 @@ class Transport {
      * @var string
      */
     protected $task_log_id;
+
+    /**
+     * @return array
+     */
+    public function getExcelData() {
+        return $this->excel_data;
+    }
+
+    /**
+     * @param array $excel_data
+     */
+    public function setExcelData($excel_data) {
+        $this->excel_data = $excel_data;
+    }
 
     /**
      * 传输处理开始
@@ -60,7 +81,7 @@ class Transport {
     protected function onFinishLoadData() {
         if (!empty($this->task_log_id)) {
             //导入项数
-            $total_amount = count($this->getImportData()) - 1; //第一行为表头
+            $total_amount = count($this->getExcelData()) - 1; //第一行为表头
             M('TransportTaskLog')->where(['id' => $this->task_log_id])->save([
                 'total_amount' => $total_amount,
                 'update_time' => time()
