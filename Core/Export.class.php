@@ -29,6 +29,9 @@ class Export extends Transport {
     //导出表格内容
     protected $_content = '';
 
+    //导出的表头
+    protected $excel_header_data = [];
+
     /**
      * 源数据
      *
@@ -101,17 +104,11 @@ class Export extends Transport {
      */
     private function exportHeaders($fields = []) {
         $content_header = '<tr>';
-        $excel_headers = [];
         foreach ($fields as $index => $field) {
             $content_header .= '<th>' . $this->exportHeader($field) . '</th>';
-            $excel_headers[] = $this->exportHeader($field);
         }
 
         $content_header .= '</tr>';
-
-        $excel_data = $this->getExcelData();
-        $excel_data[] = $excel_headers;
-        $this->setExcelData($excel_data);
 
         return $content_header;
     }
@@ -135,19 +132,12 @@ class Export extends Transport {
      */
     private function exportRow($row_data = []) {
         $row = '<tr>';
-        $fields = $this->getFields();
 
-        $excel_row = [];
-        foreach ($fields as $index => $field) {
-            $row .= '<td>' . $this->exportCell($field, $row_data) . '</td>';
-            $excel_row[] = $this->exportCell($field, $row_data);
+        foreach ($row_data as $index => $cell_data) {
+            $row .= '<td>' . $cell_data . '</td>';
         }
 
         $row .= '</tr>';
-
-        $excel_data = $this->getExcelData();
-        $excel_data[] = $excel_data;
-        $this->setExcelData($excel_data);
 
         return $row;
     }
@@ -159,7 +149,7 @@ class Export extends Transport {
      */
     private function exportRows() {
         $content_rows = '';
-        $data = $this->getData();
+        $data = $this->getExcelData();
 
         foreach ($data as $index => $row_data) {
             $content_rows .= $this->exportRow($row_data);
@@ -181,6 +171,8 @@ class Export extends Transport {
             $this->setData($data);
         }
 
+        $this->loadExcelData();
+
         $this->_content .= '<table>';
         $this->_content .= $this->exportHeaders($this->fields);
         $this->_content .= $this->exportRows();
@@ -189,8 +181,9 @@ class Export extends Transport {
         return $this->_content;
     }
 
-    private function processData(){
-       //TODO 处理数据
+    private function loadExcelData(){
+        $this->loadHeaders();
+        $this->loadRows();
     }
 
     /**
@@ -206,20 +199,29 @@ class Export extends Transport {
             $data = $this->getExportData();
             $this->setData($data);
         }
+
+        //整理数据到excel表格
+        $this->loadExcelData();
+
         $this->onFinishLoadData();
 
         //开始处理数据
         $this->onStartHandleData();
 
-        $this->exportHeaders($this->fields);
-        $this->exportRows();
-
         //设置表格
         $this->phpexcel->getProperties()->setCreator($this->filterString)->setLastModifiedBy('ZTBCMS')->setTitle("Office 2007 XLSX Document")->setSubject("Office 2007 XLSX Document")->setDescription("Document for Office 2007 XLSX, generated using PHP classes.")->setKeywords("office 2007 openxml php")->setCategory("ZTBCMS");
 
-        //填充数据
+        $header_data = $this->excel_header_data;
+
         $excel_data = $this->getExcelData();
-        foreach ($excel_data as $key => $row) {
+
+        //填充数据
+        $export_data = [$header_data];
+        foreach ($excel_data as $index => $row){
+            $export_data []= $row;
+        }
+
+        foreach ($export_data as $key => $row) {
 
             $this->onStartHandleRowData();
 
@@ -338,6 +340,42 @@ class Export extends Transport {
      */
     public function setCondition($condition) {
         $this->condition = $condition;
+    }
+
+    private function loadHeaders(){
+        $header_data = [];
+        $fields = $this->getFields();
+        foreach ($fields as $index => $field) {
+            $header_data []= $this->exportHeader($field);
+        }
+
+        $this->excel_header_data = $header_data;
+
+        return $header_data;
+    }
+
+    private function loadRows() {
+        $rows = [];
+        $data = $this->getData();
+
+        foreach ($data as $index => $row_data) {
+            $rows []= $this->loadRow($row_data);
+        }
+
+        $this->setExcelData($rows);
+
+        return $rows;
+    }
+
+    private function loadRow($row_data){
+        $row = [];
+        $fields = $this->getFields();
+
+        foreach ($fields as $index => $field) {
+            $row []= $this->exportCell($field, $row_data);
+        }
+
+        return $row;
     }
 
 }
