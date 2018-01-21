@@ -14,7 +14,7 @@ use Transport\Model\TransportTaskLogModel;
 class Transport {
 
     /**
-     * Excel数据
+     * Excel表格上的数据（不包含该第一行表头）
      *
      * @var array
      */
