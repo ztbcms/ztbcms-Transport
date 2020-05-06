@@ -26,6 +26,61 @@
         bottom: 0;
         opacity: 0;
     }
+    .progress {
+        height: 25px;
+        background: #262626;
+        padding: 5px;
+        overflow: visible;
+        border-radius: 20px;
+        border-top: 1px solid #000;
+        border-bottom: 1px solid #7992a8;
+        margin-top: 10px;
+    }
+
+    .progress .progress-bar {
+        border-radius: 20px;
+        position: relative;
+        animation: animate-positive 2s;
+    }
+
+    .progress .progress-value {
+        display: block;
+        padding: 3px 7px;
+        font-size: 13px;
+        color: #fff;
+        border-radius: 4px;
+        background: #191919;
+        border: 1px solid #000;
+        position: absolute;
+        top: -40px;
+        right: -10px;
+    }
+
+    .progress .progress-value:after {
+        content: "";
+        border-top: 10px solid #191919;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        position: absolute;
+        bottom: -6px;
+        left: 26%;
+    }
+
+    .progress-bar.active {
+        animation: reverse progress-bar-stripes 0.40s linear infinite, animate-positive 2s;
+    }
+
+    @-webkit-keyframes animate-positive {
+        0% {
+            width: 0;
+        }
+    }
+
+    @keyframes animate-positive {
+        0% {
+            width: 0;
+        }
+    }
 </style>
 <body class="J_scroll_fixed">
 <div class="wrap">
@@ -83,15 +138,30 @@
                 </tr>
 
                 <if condition="$type EQ 1">
+<!--                    <tr>-->
+<!--                        <th>导入文件</th>-->
+<!--                        <td>-->
+<!--                            <div class="uploader-container" >-->
+<!--                                <p class="upload-draft"  >点击上传</p>-->
+<!--                                <input type="file" name="upload_file"  accept="application/vnd.ms-excel,application/x-xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">-->
+<!--                            </div>-->
+<!--                            <input type="text" class="input length_5 mr5" name="filename" value="" readonly accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></td>-->
+<!--                        <td><div class="fun_tips"></div></td>-->
+<!--                    </tr>-->
+
                     <tr>
                         <th>导入文件</th>
                         <td>
-                            <div class="uploader-container" >
-                                <p class="upload-draft"  >点击上传</p>
-                                <input type="file" name="upload_file"  accept="application/vnd.ms-excel,application/x-xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+                            <input type="file" name="file" id="myFile">
+                            <a onclick="upload()">确认上传</a>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-info progress-bar-striped active" id="mt-progress-length"
+                                     style="width: 0%;">
+                                    <div class="progress-value" id="mt-progress-value">0%</div>
+                                </div>
                             </div>
-                            <input type="text" class="input length_5 mr5" name="filename" value="" readonly accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></td>
-                        <td><div class="fun_tips"></div></td>
+                            <input type="text" name="filename"  class="input_5  " value="" readonly accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></td>
+                        </td>
                     </tr>
                 </if>
 
@@ -108,6 +178,7 @@
         <div class="">
             <div class="btn_wrap_pd">
                 <button class="btn btn_submit " type="submit">创建执行日志</button>
+                <button class="btn btn_submit " type="button" onclick="">立即执行</button>
             </div>
         </div>
     </form>

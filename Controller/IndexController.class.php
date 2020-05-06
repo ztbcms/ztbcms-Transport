@@ -296,4 +296,11 @@ class IndexController extends AdminBase {
         }
 
     }
+
+    /**
+     * 立即执行
+     */
+    function task_exce_info(){
+
+    }
 }
