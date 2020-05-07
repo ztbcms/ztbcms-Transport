@@ -20,11 +20,11 @@ class TransportService extends BaseService
     /**
      * 获取进度
      */
-    static function getSum($task_log_id){
+    static function getSpeed($task_log_id){
         $data = M('TransportTaskLog')
-            ->where(['task_id'=>$task_log_id])
+            ->where(['id'=>$task_log_id])
             ->find();
-        $speed = number_format($data['total_amount'] / $data['progress'],1) * 100;
+        $speed = number_format($data['progress'] / $data['total_amount'],1) * 100;
         $returnData = [
             'speed'=> $speed
         ];

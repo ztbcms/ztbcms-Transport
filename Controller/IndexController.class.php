@@ -12,6 +12,7 @@ use Transport\Core\Export;
 use Transport\Core\ExportField;
 use Transport\Core\Import;
 use Transport\Model\TransportTaskModel;
+use Transport\Service\TransportService;
 
 /**
  * Class IndexController
@@ -298,9 +299,26 @@ class IndexController extends AdminBase {
     }
 
     /**
-     * 立即执行
+     * 定时任务执行
      */
-    function task_exce_info(){
+    public function task_exce_info(){
+        $data = I('post.');
+        $data['inputtime'] = time();
+        $id = M('TransportTaskLog')->data($data)->add();
 
+        $task = M('TransportTaskLog')->where(['id'=>$id])->find();
+        $task_ = M('TransportTask')->where(['id'=>$task['task_id']])->find();
+        $this->assign($task);
+        $this->assign($task_);
+        $this->display();
+    }
+
+    /**
+     * 获取进度
+     */
+    public function getSpeed(){
+        $task_log_id = I('get.task_log_id');
+        $res =  TransportService::getSpeed($task_log_id);
+        return $this->ajaxReturn($res);
     }
 }
