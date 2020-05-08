@@ -29,7 +29,7 @@ class IndexController extends AdminBase {
 
         $this->db = D('Transport/TransportTask');
 
-        // 添加定时任务
+        // 添加定时任务  执行url /Cron/index/index
         $check = M('Cron')->where(['type'=>1,'subject'=>'导入定时任务'])->find();
         if(!$check){
             $addData = [
@@ -331,7 +331,8 @@ class IndexController extends AdminBase {
     }
 
     /**
-     * 获取进度
+     * 获取进度条数值
+     * task_log_id 计划日志id
      */
     public function getSpeed(){
         $task_log_id = I('get.task_log_id');
