@@ -189,7 +189,7 @@
                     $(".progress").css("background", "#15AD66");
                     //归零 隐藏
                     $("#mt-progress-length").css({"width": "0%", "opacity": "0"});
-                    
+
                     $("#success_text").css({"opacity": "1"});
                 }
                 percentStr = percentStr.substring(0, percentStr.indexOf("."));
@@ -197,100 +197,6 @@
             }
         })
     }, 2000);
-
-
-    $(":file").change(function () {
-        var file = this.files[0];
-        var name = file.name;
-        var size = file.size;
-        var type = file.type;
-
-        url = window.URL.createObjectURL(file);
-
-        totalSize += size;
-
-        $(".show_info").html("文件名：" + name + "<br>文件类型：" + type + "<br>文件大小：" + size + "<br>url: " + url);
-        console.log("ok");
-
-        //恢复进度条的状态
-        //背景成绿色
-        $(".progress").css("background", "#262626");
-        //归零 隐藏
-        $("#mt-progress-length").css({"width": "0%", "opacity": "1"});
-        $("#mt-progress-value").html(0);
-
-    })
-
-
-    function upload() {
-        //背景恢复
-        $(".progress").css("background", "#262626");
-        //归零 隐藏
-        $("#mt-progress-length").css({"width": "0%", "opacity": "1"});
-        $("#mt-progress-value").html(0);
-
-
-        //创建formData对象  初始化为form表单中的数据
-        //需要添加其他数据  就可以使用 formData.append("property", "value");
-        var formData = new FormData();
-        var fileInput = document.getElementById("myFile");
-        var file = fileInput.files[0];
-        formData.append("file", file);
-
-        // ajax异步上传
-        $.ajax({
-            url: "{:U('Transport/Upload/upload')}",
-            type: "POST",
-            data: formData,
-            contentType: false, //必须false才会自动加上正确的Content-Type
-            processData: false,  //必须false才会避开jQuery对 formdata 的默认处理
-            enctype: 'multipart/form-data',
-            xhr: function () {
-                //获取ajax中的ajaxSettings的xhr对象  为他的upload属性绑定progress事件的处理函数
-                var myXhr = $.ajaxSettings.xhr();
-                if (myXhr.upload) {
-                    //检查其属性upload是否存在
-                    myXhr.upload.addEventListener("progress", resultProgress, false);
-                }
-                return myXhr;
-            },
-            success: function (result) {
-                if(result.status){
-                    $('input[name=filename]').val(result.data.url);
-                }
-                console.log(result);
-            },
-            error: function (data) {
-                alert(data.msg)
-                console.log(data);
-            }
-        })
-    }
-
-    //上传进度回调函数
-    function resultProgress(e) {
-        if (e.lengthComputable) {
-            var percent = e.loaded / e.total * 100;
-            $(".show_result").html(percent + "%");
-            var percentStr = String(percent);
-            if (percentStr == "100") {
-                percentStr = "100.0";
-            }
-            percentStr = percentStr.substring(0, percentStr.indexOf("."));
-            console.log(percentStr)
-            $("#mt-progress-value").html(percentStr);
-            $("#mt-progress-length").css("width", percentStr + "%");
-
-            if (percentStr == "100") {
-                setTimeout(function () {
-                    //背景成绿色
-                    $(".progress").css("background", "#15AD66");
-                    //归零 隐藏
-                    $("#mt-progress-length").css({"width": "0%", "opacity": "0"});
-                }, 500);
-            }
-        }
-    }
 </script>
 
 </body>
