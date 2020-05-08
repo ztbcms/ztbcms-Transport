@@ -146,6 +146,10 @@
                                      style="width: 0%;">
                                     <div class="progress-value" id="mt-progress-value">0%</div>
                                 </div>
+                                <span style="font-size: 14px;
+                                    position: absolute;
+                                    opacity: 0;
+                                    left: 42%;" id="success_text">完成</span>
                             </div>
                         </td>
                     </tr>
@@ -172,13 +176,21 @@
             dataType:"json",
             type:"get",
             success(res){
-                console.log(res.data.speed)
                 $("#mt-progress-value").html(res.data.speed + "%");
 
                 var percentStr = String(res.data.speed);
-                console.log(percentStr)
+
                 if (percentStr == "100") {
                     percentStr = "100.0";
+                }
+                if (percentStr == "100.0"){
+                    console.log('完成')
+                    //背景成绿色
+                    $(".progress").css("background", "#15AD66");
+                    //归零 隐藏
+                    $("#mt-progress-length").css({"width": "0%", "opacity": "0"});
+                    
+                    $("#success_text").css({"opacity": "1"});
                 }
                 percentStr = percentStr.substring(0, percentStr.indexOf("."));
                 $("#mt-progress-length").css("width", percentStr + "%");
