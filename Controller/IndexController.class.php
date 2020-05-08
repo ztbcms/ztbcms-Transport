@@ -28,6 +28,21 @@ class IndexController extends AdminBase {
         parent::_initialize();
 
         $this->db = D('Transport/TransportTask');
+
+        // 添加定时任务
+        $check = M('Cron')->where(['type'=>1,'subject'=>'导入定时任务'])->find();
+        if(!$check){
+            $addData = [
+                'subject'=> '导入定时任务',
+                'type'=> 1,
+                'loop_type'=> 'now',
+                'loop_daytime'=> '0-0-1',
+                'cron_file'=> 'Cron\CronScript\ImportDemo',
+                'isopen'=> '1',
+                'created_time'=> time(),
+            ];
+            M('Cron')->add($addData);
+        }
     }
 
 
@@ -311,6 +326,7 @@ class IndexController extends AdminBase {
         $task_ = M('TransportTask')->where(['id'=>$task['task_id']])->find();
         $this->assign($task);
         $this->assign($task_);
+        $this->assign('task_log_id',$id);
         $this->display();
     }
 
@@ -324,55 +340,4 @@ class IndexController extends AdminBase {
     }
 
 
-    /**
-     * 执行任务 限制数量分批
-     */
-    public function task_exec_limit() {
-        //设置脚本最大执行时间
-        set_time_limit(0);
-        $task_log_id = I('task_log_id');
-
-        $task_log = M('TransportTaskLog')->where(['id' => $task_log_id])->find();
-        $task = M('TransportTask')->where(['id' => $task_log['task_id']])->find();
-
-        if ($task['type'] == 1) {
-            $limit = 3;
-            $tbody_file_url = str_replace(cache('Config.sitefileurl'), './d/file/', $task_log['filename']);
-            $tbody_res = MyExportService::getExcelData($tbody_file_url);
-            $tbody_res = array_merge($tbody_res, []);
-            $total_items = count($tbody_res);
-            $total_pages = ceil($total_items/$limit);
-
-            //获取模型字段
-            $modelid = M('Model')->where(['tablename' => $task['model']])->getField('modelid');
-            $model_field = M('ModelField')->where(['modelid' => $modelid])->order('`listorder` ASC')->getField('field', true);
-
-            dump($model_field);
-
-
-            for($page = 1; $page <= $total_pages; $page++){
-                $first_row = ($page-1)*$limit;
-                $last_row = $page*$limit-1;
-                $last_row = min($total_items, $last_row);
-            }
-            //导入
-//            $import = new Import($task_log_id);
-//
-//            $import->setModel($task['model']);
-//
-//            //字段映射
-//            $fields = [];
-//            $task_fields = M('TransportField')->where(['task_id' => $task['id']])->select();
-//            foreach ($task_fields as $index => $field) {
-//                $fields[] = new ExportField($field['field_name'], $field['export_name'], $field['filter']);
-//            }
-//            $import->setFields($fields);
-//
-//            $import->setFilename(getcwd() . $task_log['filename']);
-//
-//            //开始导入
-//            $import->import();
-//            $this->success('导入成功');
-        }
-    }
 }

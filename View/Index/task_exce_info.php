@@ -44,6 +44,7 @@
     }
 
     .progress .progress-value {
+        width: 62px;
         display: block;
         padding: 3px 7px;
         font-size: 13px;
@@ -53,7 +54,7 @@
         border: 1px solid #000;
         position: absolute;
         top: -40px;
-        right: -10px;
+        right: -38px
     }
 
     .progress .progress-value:after {
@@ -95,7 +96,7 @@
                 <col />
                 <tr>
                     <th>任务标题</th>
-                    <td>{$title}{$model}
+                    <td>{$title}
                         <input type="hidden" name="title" value="{$title}">
                     </td>
                     <td><div class="fun_tips"></div></td>
@@ -137,15 +138,6 @@
                     <td><div class="fun_tips"></div></td>
                 </tr>
                 <if condition="$type EQ 1">
-<!--                    <tr>-->
-<!--                        <th>导入文件</th>-->
-<!--                        <td>-->
-<!--                            <input type="file" name="file" id="myFile">-->
-<!--                            <a onclick="upload()">确认上传</a>-->
-<!--                            -->
-<!--                            <input type="text" name="filename"  class="input_5  " value="" readonly accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></td>-->
-<!--                        </td>-->
-<!--                    </tr>-->
                     <tr>
                         <th>进度条</th>
                         <td>
@@ -171,30 +163,28 @@
 </div>
 <script>
     //进行轮询查询进度
-    var that = this;
-    var percent = "10.0";
-
-    var percentStr = String(percent);
-    if (percentStr == "100") {
-        percentStr = "100.0";
-    }
-    percentStr = percentStr.substring(0, percentStr.indexOf("."));
-
-    $("#mt-progress-length").css("width", percentStr + "%");
-
+    var percent = "0.0";
     setInterval(function () {
         var url = "{:U('Transport/index/getSpeed')}";
-        url = url + '&task_log_id=' + 26
-        // console.log(url)
+        url = url + '&task_log_id=' + <?= $task_log_id ?>;
         $.ajax({
             url:url,
             dataType:"json",
             type:"get",
             success(res){
-                $("#mt-progress-value").html(res.data.speed);
+                console.log(res.data.speed)
+                $("#mt-progress-value").html(res.data.speed + "%");
+
+                var percentStr = String(res.data.speed);
+                console.log(percentStr)
+                if (percentStr == "100") {
+                    percentStr = "100.0";
+                }
+                percentStr = percentStr.substring(0, percentStr.indexOf("."));
+                $("#mt-progress-length").css("width", percentStr + "%");
             }
         })
-    }, 1000);
+    }, 2000);
 
 
     $(":file").change(function () {
