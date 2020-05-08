@@ -16,6 +16,7 @@ use Transport\Service\TransportService;
 class ImportDemo extends Cron
 {
     /**
+     * 导入定时任务Demo
      * @param string $cronId
      */
     public function run($cronId)

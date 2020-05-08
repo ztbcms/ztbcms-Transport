@@ -315,7 +315,7 @@ class IndexController extends AdminBase {
     }
 
     /**
-     * 定时任务执行
+     * 任务执行详情页
      */
     public function task_exce_info(){
         $data = I('post.');
