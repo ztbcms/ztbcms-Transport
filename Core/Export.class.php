@@ -260,7 +260,7 @@ class Export extends Transport {
     /**
      * 生成 XLS 文件 并保存到本地
      */
-    public function exportXlsSrc() {
+    public function exportXlsSrc($fileName = "") {
         $this->onStartTransport();
         //先提取数据
         $this->onStartLoadData();
@@ -343,7 +343,7 @@ class Export extends Transport {
             }
         }
 
-        $fileName = time();
+        $fileName = $fileName ? $fileName.'-'.date('YmdHis',time()) : time();
         $_fileName = iconv("utf-8", "gb2312", $fileName);   //转码
         $_savePath = $savePath.$_fileName.'.xls';
         $objWriter->save($_savePath);
