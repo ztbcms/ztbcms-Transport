@@ -257,6 +257,101 @@ class Export extends Transport {
     }
 
 
+    /**
+     * 生成 XLS 文件 并保存到本地
+     */
+    public function exportXlsSrc() {
+        $this->onStartTransport();
+        //先提取数据
+        $this->onStartLoadData();
+        $data = $this->getData();
+        if (empty($data)) {
+            $data = $this->getExportData();
+            $this->setData($data);
+        }
+
+        //整理数据到excel表格
+        $this->loadExcelData();
+
+        $this->onFinishLoadData();
+        //开始处理数据
+        $this->onStartHandleData();
+
+        //设置表格
+        $this->phpexcel->getProperties()->setCreator($this->filterString)->setLastModifiedBy('ZTBCMS')->setTitle("Office 2007 XLSX Document")->setSubject("Office 2007 XLSX Document")->setDescription("Document for Office 2007 XLSX, generated using PHP classes.")->setKeywords("office 2007 openxml php")->setCategory("ZTBCMS");
+
+        $header_data = $this->excel_header_data;
+
+        $excel_data = $this->getExcelData();
+
+        //填充数据
+        $export_data = [$header_data];
+        foreach ($excel_data as $index => $row){
+            $export_data []= $row;
+        }
+
+        foreach ($export_data as $key => $row) {
+
+            $this->onStartHandleRowData();
+
+            $num = $key + 1;
+            $i = 0;
+            foreach ($row as $key2 => $value2) {
+                $value2 = ' ' . $value2; //处理XLS自动把该行纯数字并且比较长，自动转为客服计数，会自动补全0
+                $this->phpexcel->setActiveSheetIndex(0)->setCellValue(\PHPExcel_Cell::stringFromColumnIndex($i) . ($num),
+                    $value2);
+                $i++;
+            }
+
+            $this->onFinishHandlRowData();
+        }
+
+        //设置表格并输出
+        $this->phpexcel->getActiveSheet()->setTitle($this->filename);
+        ob_end_clean();//清除缓冲区,避免乱码
+        header('Content-Type: application/vnd.ms-excel');
+        header("Content-Disposition: attachment;filename={$this->filename}.xls");
+        header('Cache-Control: max-age=0');
+        header('Cache-Control: max-age=1');
+        header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+        header('Cache-Control: cache, must-revalidate');
+        header('Pragma: public'); // HTTP/1.0
+        $objWriter = \PHPExcel_IOFactory::createWriter($this->phpexcel, 'Excel5');
+//        $objWriter->save('php://output');
+
+        $this->onFinishHandleData();
+        $this->onFinishTransport();
+
+        // 返回保存地址
+        $savePath = "./d/file/module_transport/".date("Ymd",time())."/";
+        // 检查上传目录
+        if (!is_dir($savePath)) {
+            // 检查目录是否编码后的
+            if (is_dir(base64_decode($savePath))) {
+                $savePath = base64_decode($savePath);
+            } else {
+                // 尝试创建目录
+                if (!mkdir($savePath)) {
+                    $this->error = '上传目录' . $savePath . '不存在';
+                    return false;
+                }
+            }
+        } else {
+            if (!is_writeable($savePath)) {
+                $this->error = '上传目录' . $savePath . '不可写';
+                return false;
+            }
+        }
+
+        $fileName = time();
+        $_fileName = iconv("utf-8", "gb2312", $fileName);   //转码
+        $_savePath = $savePath.$_fileName.'.xls';
+        $objWriter->save($_savePath);
+        return $savePath.$fileName.'.xls';
+        exit;
+    }
+
+
 
     /**
      * @return array

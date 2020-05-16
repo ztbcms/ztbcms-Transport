@@ -11,8 +11,8 @@ use Common\Controller\AdminBase;
 use Transport\Core\Export;
 use Transport\Core\ExportField;
 use Transport\Core\Import;
+use Transport\Model\TransportTaskLogModel;
 use Transport\Model\TransportTaskModel;
-use Transport\Service\MyExportService;
 use Transport\Service\TransportService;
 
 /**
@@ -28,21 +28,6 @@ class IndexController extends AdminBase {
         parent::_initialize();
 
         $this->db = D('Transport/TransportTask');
-
-        // 添加定时任务  执行url /Cron/index/index
-        $check = M('Cron')->where(['type'=>1,'subject'=>'导入定时任务'])->find();
-        if(!$check){
-            $addData = [
-                'subject'=> '导入定时任务',
-                'type'=> 1,
-                'loop_type'=> 'now',
-                'loop_daytime'=> '0-0-1',
-                'cron_file'=> 'Cron\CronScript\ImportDemo',
-                'isopen'=> '1',
-                'created_time'=> time(),
-            ];
-            M('Cron')->add($addData);
-        }
     }
 
 
@@ -273,6 +258,7 @@ class IndexController extends AdminBase {
             } else {
                 //开始导入
                 $import->import();
+//                $this->ajaxReturn(createReturn(true,'','导入成功'));
                 $this->success('导入成功');
             }
         }
@@ -302,12 +288,25 @@ class IndexController extends AdminBase {
         $data = I('post.');
 
         $data['inputtime'] = time();
-        $id = M('TransportTaskLog')->data($data)->add();
+
+        $TransportTaskLogModel = new TransportTaskLogModel();
+
+        // 校验上传文件
+        $type = $data['type'];
+        $filename = $data['filename'];
+
+        if($type == TransportTaskModel::TYPE_IMPORT && empty($filename)){
+            $this->error('请上传文件');
+        }
+        if($type == TransportTaskModel::TYPE_EXPORT && empty($filename)){
+            $this->error('请输入导出文件名');
+        }
+
+        $id = $TransportTaskLogModel->data($data)->add();
         if ($id) {
             //跳转
             $this->redirect('task_logs');
             $this->success('创建任务执行日志成功', U('Transport/Index/task_logs'));
-
         } else {
             $this->error('创建任务执行日志失败');
         }
@@ -317,17 +316,55 @@ class IndexController extends AdminBase {
     /**
      * 任务执行详情页
      */
-    public function task_exce_info(){
+    public function task_exec_info(){
+        $TransportTaskModel = new TransportTaskModel();
+        $TransportTaskLogModel = new TransportTaskLogModel();
+
         $data = I('post.');
         $data['inputtime'] = time();
-        $id = M('TransportTaskLog')->data($data)->add();
+        // 校验上传文件
+        $type = $data['type'];
+        $filename = $data['filename'];
+        if($type == TransportTaskModel::TYPE_IMPORT && empty($filename)){
+            $this->error('请上传文件');
+        }
+        if($type == TransportTaskModel::TYPE_EXPORT && empty($filename)){
+            $this->error('请输入导出文件名');
+        }
 
-        $task = M('TransportTaskLog')->where(['id'=>$id])->find();
-        $task_ = M('TransportTask')->where(['id'=>$task['task_id']])->find();
+        // 写入记录
+        $id = $TransportTaskLogModel->data($data)->add();
+        $task = $TransportTaskLogModel->where(['id'=>$id])->find();
+        $task_ = $TransportTaskModel->where(['id'=>$task['task_id']])->find();
         $this->assign($task);
         $this->assign($task_);
         $this->assign('task_log_id',$id);
         $this->display();
+    }
+
+
+    /**
+     * 下载示例文件
+     */
+    public function down(){
+        $filename = '示例文件';
+        $strTable = '<table width="500" border="1">';
+        $strTable .= '<tr>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="100">name</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="100">sex</td>';
+        $strTable .= '</tr>';
+
+        $strTable .= '<tr>';
+        $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;小李</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;">男</td>';
+        $strTable .= '</tr>';
+
+        header("Content-type: application/vnd.ms-excel");
+        header("Content-Type: application/force-download");
+        header("Content-Disposition: attachment; filename=" . $filename . ".xls");
+        header('Expires:0');
+        header('Pragma:public');
+        echo '<html><meta http-equiv="Content-Type" content="text/html; charset=utf-8" />' . $strTable . '</html>';
     }
 
     /**
@@ -337,7 +374,7 @@ class IndexController extends AdminBase {
     public function getSpeed(){
         $task_log_id = I('get.task_log_id');
         $res =  TransportService::getSpeed($task_log_id);
-        return $this->ajaxReturn($res);
+        $this->ajaxReturn($res);
     }
 
 

@@ -33,7 +33,7 @@ class MyExportService extends BaseService{
     static function getExcelData($file_url){
         include_once(APP_PATH . '/Transport/Libs/PHPExcel/IOFactory.php');
         include_once(APP_PATH . '/Transport/Libs/PHPExcel/Cell.php');
-        $objReader = \PHPExcel_IOFactory::createReader('Excel2007');
+        $objReader = \PHPExcel_IOFactory::createReader('Excel5');
         $objPHPExcel = $objReader->load($file_url);
         $objWorksheet = $objPHPExcel->getActiveSheet();
         $highestRow = $objWorksheet->getHighestRow();

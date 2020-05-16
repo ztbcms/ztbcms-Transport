@@ -137,23 +137,21 @@
                     </td>
                     <td><div class="fun_tips"></div></td>
                 </tr>
-                <if condition="$type EQ 1">
-                    <tr>
-                        <th>进度条</th>
-                        <td>
-                            <div class="progress">
-                                <div class="progress-bar progress-bar-info progress-bar-striped active" id="mt-progress-length"
-                                     style="width: 0%;">
-                                    <div class="progress-value" id="mt-progress-value">0%</div>
-                                </div>
-                                <span style="font-size: 14px;
-                                    position: absolute;
-                                    opacity: 0;
-                                    left: 42%;" id="success_text">完成</span>
+                <tr>
+                    <th>进度条</th>
+                    <td>
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-info progress-bar-striped active" id="mt-progress-length"
+                                 style="width: 0%;">
+                                <div class="progress-value" id="mt-progress-value">0%</div>
                             </div>
-                        </td>
-                    </tr>
-                </if>
+                            <span style="font-size: 14px;
+                                position: absolute;
+                                opacity: 0;
+                                left: 42%;" id="success_text">完成</span>
+                        </div>
+                    </td>
+                </tr>
             </table>
         </div>
         <div class="" style="display:none;">
@@ -167,8 +165,7 @@
 </div>
 <script>
     //进行轮询查询进度
-    var percent = "0.0";
-    setInterval(function () {
+    var time = setInterval(function () {
         var url = "{:U('Transport/index/getSpeed')}";
         url = url + '&task_log_id=' + <?= $task_log_id ?>;
         $.ajax({
@@ -185,12 +182,18 @@
                 }
                 if (percentStr == "100.0"){
                     console.log('完成')
+                    clearTimeout(time)
                     //背景成绿色
                     $(".progress").css("background", "#15AD66");
                     //归零 隐藏
                     $("#mt-progress-length").css({"width": "0%", "opacity": "0"});
 
                     $("#success_text").css({"opacity": "1"});
+                }
+                // 导出文件路径
+                if(res.data.result_file != ""){
+                    clearTimeout(time)
+                    alert('文件路径:'+res.data.result_file)
                 }
                 percentStr = percentStr.substring(0, percentStr.indexOf("."));
                 $("#mt-progress-length").css("width", percentStr + "%");

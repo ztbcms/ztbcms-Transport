@@ -52,7 +52,7 @@
                         <if condition="$type EQ 1">导入任务</if>
                         <if condition="$type EQ 2">导出任务</if>
 
-                        <input type="hidden" name="type" value="{$type}">
+                        <input type="hidden" name="type" value="{$type}" id="type_id">
                     </td>
                     <td><div class="fun_tips"></div></td>
                 </tr>
@@ -108,9 +108,11 @@
         <div class="">
             <div class="btn_wrap_pd">
                 <button class="btn btn_submit " type="submit">创建执行日志</button>
-                <button class="btn btn_submit " type="button" id="doPlay">立即执行</button>
+                <button class="btn btn_submit " type="button" id="doPlay">创建并查看进度</button>
+                <button class="btn btn_submit " type="button" id="download">下载示例</button>
             </div>
         </div>
+        <small>Tip:导入导出前，请编辑任务，设置好字段映射</small>
     </form>
     <!--结束-->
 </div>
@@ -163,12 +165,27 @@
 
         //=== 文件上传 END
 
-        // 立刻定时任务执行
+        // 创建定时任务并查看详情
         $("#doPlay").on('click',function () {
-            document.getElementById('form1').action = "{:U('Transport/Index/task_exce_info')}";
+            var type_id = $("#type_id").val()
+            if(type_id == 1 && $("input[name=filename]").val() == ""){
+                // 导入
+                alert('请导入文件')
+                return false;
+            }
+            if(type_id == 2 && $("input[name=filename]").val() == ""){
+                // 导出
+                alert('请输入导出文件名')
+                return false;
+            }
+            document.getElementById('form1').action = "{:U('Transport/Index/task_exec_info')}";
             document.getElementById("form1").submit();
         })
-        
+
+        // 下载示例文件
+        $("#download").on('click',function () {
+            window.location.href = '/Transport/index/down';
+        })
     })(jQuery);
 </script>
 </body>
