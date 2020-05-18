@@ -32,12 +32,14 @@ class TransportService extends BaseService
             ->find();
         $speed = number_format($data['success_amount'] / $data['total_amount'], 3);
 
+        $url = "";
         if(!empty($data['result_file'])){
+            $url = urlDomain(get_url());
             $speed = 1;
         }
         $returnData = [
             'speed' => sprintf("%.1f", $speed * 100),
-            'result_file' => $data['result_file']
+            'result_file' => $url.$data['result_file']
         ];
         return self::createReturn(true, $returnData);
     }
@@ -191,7 +193,7 @@ class TransportService extends BaseService
         }
         $export->setFields($fields);
 
-        $url = $export->exportXlsSrc($task_log['filename']);
+        $url = $export->exportXlsSrc($task_log['filename'],$task['title']);
         // 保存文件
         if(!empty($url)){
             $TransportTaskLogModel->where(['id' => $task_log['id']])->save(['result' => 2,'update_time'=>time(),'result_file'=>$url]);

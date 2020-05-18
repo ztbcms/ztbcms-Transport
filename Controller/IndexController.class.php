@@ -298,9 +298,9 @@ class IndexController extends AdminBase {
         if($type == TransportTaskModel::TYPE_IMPORT && empty($filename)){
             $this->error('请上传文件');
         }
-        if($type == TransportTaskModel::TYPE_EXPORT && empty($filename)){
-            $this->error('请输入导出文件名');
-        }
+//        if($type == TransportTaskModel::TYPE_EXPORT && empty($filename)){
+//            $this->error('请输入导出文件名');
+//        }
 
         $id = $TransportTaskLogModel->data($data)->add();
         if ($id) {
@@ -328,9 +328,9 @@ class IndexController extends AdminBase {
         if($type == TransportTaskModel::TYPE_IMPORT && empty($filename)){
             $this->error('请上传文件');
         }
-        if($type == TransportTaskModel::TYPE_EXPORT && empty($filename)){
-            $this->error('请输入导出文件名');
-        }
+//        if($type == TransportTaskModel::TYPE_EXPORT && empty($filename)){
+//            $this->error('请输入导出文件名');
+//        }
 
         // 写入记录
         $id = $TransportTaskLogModel->data($data)->add();

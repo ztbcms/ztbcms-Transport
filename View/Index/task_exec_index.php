@@ -112,7 +112,7 @@
                 <button class="btn btn_submit " type="button" id="download">下载示例</button>
             </div>
         </div>
-        <small>Tip:导入导出前，请编辑任务，设置好字段映射</small>
+        <small>Tip:导入导出前，请编辑任务，设置字段映射</small>
     </form>
     <!--结束-->
 </div>
@@ -173,11 +173,11 @@
                 alert('请导入文件')
                 return false;
             }
-            if(type_id == 2 && $("input[name=filename]").val() == ""){
-                // 导出
-                alert('请输入导出文件名')
-                return false;
-            }
+            // if(type_id == 2 && $("input[name=filename]").val() == ""){
+            //     // 导出
+            //     alert('请输入导出文件名')
+            //     return false;
+            // }
             document.getElementById('form1').action = "{:U('Transport/Index/task_exec_info')}";
             document.getElementById("form1").submit();
         })

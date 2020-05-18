@@ -258,9 +258,16 @@ class Export extends Transport {
 
 
     /**
+     *
      * 生成 XLS 文件 并保存到本地
+     * @param string $fileName
+     * @param string $title
+     * @return bool|string
+     * @throws \PHPExcel_Exception
+     * @throws \PHPExcel_Reader_Exception
+     * @throws \PHPExcel_Writer_Exception
      */
-    public function exportXlsSrc($fileName = "") {
+    public function exportXlsSrc($fileName = "",$title = "") {
         $this->onStartTransport();
         //先提取数据
         $this->onStartLoadData();
@@ -316,6 +323,7 @@ class Export extends Transport {
         header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
         header('Cache-Control: cache, must-revalidate');
         header('Pragma: public'); // HTTP/1.0
+        header("Content-Transfer-Encoding:binary");
         $objWriter = \PHPExcel_IOFactory::createWriter($this->phpexcel, 'Excel5');
 //        $objWriter->save('php://output');
 
@@ -343,7 +351,7 @@ class Export extends Transport {
             }
         }
 
-        $fileName = $fileName ? $fileName.'-'.date('YmdHis',time()) : time();
+        $fileName = $fileName ? $fileName : $title.'-'.date('YmdHis',time()) ;
         $_fileName = iconv("utf-8", "gb2312", $fileName);   //转码
         $_savePath = $savePath.$_fileName.'.xls';
         $objWriter->save($_savePath);

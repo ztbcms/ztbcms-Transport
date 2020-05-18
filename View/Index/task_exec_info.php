@@ -150,6 +150,7 @@
                                 opacity: 0;
                                 left: 42%;" id="success_text">完成</span>
                         </div>
+                        <small>文件路径：<span id="result_file"></span></small>
                     </td>
                 </tr>
             </table>
@@ -193,7 +194,10 @@
                 // 导出文件路径
                 if(res.data.result_file != ""){
                     clearTimeout(time)
-                    alert('文件路径:'+res.data.result_file)
+                    // 打开文件
+                    $("#result_file").html(res.data.result_file)
+                    console.log(res.data.result_file)
+
                 }
                 percentStr = percentStr.substring(0, percentStr.indexOf("."));
                 $("#mt-progress-length").css("width", percentStr + "%");
