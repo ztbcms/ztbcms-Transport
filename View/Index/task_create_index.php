@@ -1,64 +1,119 @@
-<Admintemplate file="Common/Head"/>
-<body class="J_scroll_fixed">
-<div class="wrap">
+<extend name="../../Admin/View/Common/element_layout"/>
 
-    <Admintemplate file="Common/Nav"/>
-    <div class="h_a">添加任务</div>
-    <form class="J_ajaxForm"  action="{:U('Transport/Index/task_create')}" method="post">
-        <div class="table_full">
-            <table width="100%">
-                <col class="th" />
-                <col width="400" />
-                <col />
-                <tr>
-                    <th>任务标题</th>
-                    <td><input type="text" class="input length_5 mr5" name="title" value=""></td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-
-                <tr>
-                    <th>任务描述</th>
-                    <td><input type="text" class="input length_5 mr5" name="description" value=""></td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-                <tr>
-                    <th>任务类型</th>
-                    <td>
-                        <select  name="type" class="mr10">
-                            <option value="1">导入任务</option>
-                            <option value="2">导出任务</option>
-                        </select>
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-                <tr>
-                    <th>模型</th>
-                    <td>
-                        <?php $models = M('Model')->select();?>
-                        <select  name="model" class="mr10">
-                            <volist name="models" id="model">
-                                <option value="{$model['tablename']}">{$model['name']}</option>
-                            </volist>
-                        </select>
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-
-            </table>
-        </div>
-        <div class="">
-            <div class="btn_wrap_pd">
-                <button class="btn btn_submit J_ajax_submit_btn" type="submit">提交</button>
+<block name="content">
+    <div id="app" style="padding: 8px;" v-cloak>
+        <el-card>
+            <h3>添加任务</h3>
+            <div class="filter-container">
+                <el-form :model="form">
+                    <el-form-item label="任务标题" label-width="120px" required>
+                        <el-input v-model="form.title" style="width: 400px" placeholder=""></el-input>
+                    </el-form-item>
+                    <el-form-item label="任务描述" label-width="120px" required>
+                        <el-input v-model="form.description" style="width: 400px" placeholder=""></el-input>
+                    </el-form-item>
+                    <el-form-item label="任务类型" label-width="120px">
+                        <template>
+                            <el-select v-model="form.type" clearable placeholder="请选择">
+                                <el-option
+                                        v-for="item in typeList"
+                                        :key="item.value"
+                                        :label="item.label"
+                                        :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </template>
+                    </el-form-item>
+                    <el-form-item label="模型" label-width="120px">
+                        <template>
+                            <el-select v-model="form.model"  placeholder="请选择" clearable>
+                                <el-option
+                                    v-for="item in modelList"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.label">
+                                </el-option>
+                            </el-select>
+                        </template>
+                    </el-form-item>
+                    <el-form-item label-width="120px" required>
+                        <el-button type="primary" @click="doEdit">提交</el-button>
+                    </el-form-item>
+                </el-form>
             </div>
-        </div>
-    </form>
-    <!--结束-->
-</div>
-<script src="{$config_siteurl}statics/js/common.js?v"></script>
-<script>
-    (function($){
+        </el-card>
+    </div>
 
-    })(jQuery);
-</script>
-</body>
-</html>
+    <style>
+        .filter-container {
+            padding-bottom: 10px;
+        }
+
+    </style>
+    <script>
+        $(document).ready(function () {
+            new Vue({
+                el: '#app',
+                data: {
+                    form: {
+                        title:'',
+                        description:'',
+                        type: 1,
+                        model: '',
+                    },
+                    typeList: [
+                        {
+                            value: 1,
+                            label: '导入任务'
+                        },
+                        {
+                            value: 2,
+                            label: '导出任务'
+                        }
+                    ],
+                    modelList:[], // 模型列表
+                    tableKey: 0,
+                },
+                watch: {},
+                filters: {},
+                methods: {
+                    doEdit: function () {
+                        var that = this;
+                        $.ajax({
+                            url:"{:U('task_create')}",
+                            dataType:"json",
+                            data:that.form,
+                            type:"post",
+                            success(res){
+                                if(res.status){
+                                    layer.msg("添加成功", {time: 1000}, function () {
+                                        window.location.reload()
+                                    });
+                                }else{
+                                    layer.msg("添加失败", {time: 1000}, function () {
+                                        window.location.reload()
+                                    });
+                                }
+                            }
+                        })
+                    },
+                    getModelList(){
+                        var that = this;
+                        $.ajax({
+                            url:"{:U('task_create_index')}",
+                            dataType:"json",
+                            type:"get",
+                            success(res){
+                                that.modelList = res.data;
+                            }
+                        })
+                    }
+                },
+                mounted: function () {
+                    this.getModelList();
+                },
+            })
+        })
+    </script>
+</block>
+

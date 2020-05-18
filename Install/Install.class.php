@@ -26,10 +26,10 @@ class Install extends InstallBase
     public function end() {
         // 添加定时任务  执行url /Cron/index/index
         $CronModel = new CronModel();
-        $check = $CronModel->where(['type'=>1,'subject'=>'导入定时任务'])->find();
+        $check = $CronModel->where(['type'=>1,'subject'=>'导入与导出定时任务'])->find();
         if(!$check){
             $addData = [
-                'subject'=> '导入定时任务',
+                'subject'=> '导入与导出定时任务',
                 'type'=> 1,
                 'loop_type'=> 'now',
                 'loop_daytime'=> '0-0-1',

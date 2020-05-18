@@ -1,145 +1,21 @@
-<Admintemplate file="Common/Head"/>
+<extend name="../../Admin/View/Common/element_layout"/>
 
-<!--  simditor 上传组件 -->
-<script type="text/javascript" src="{$config_siteurl}statics/admin/simditor/scripts/module.min.js"></script>
-<script type="text/javascript" src="{$config_siteurl}statics/admin/simditor/scripts/uploader.min.js"></script>
-
-<style>
-    .uploader-container{
-        position: relative;
-        width: 300px;
-        height: 60px;
-        background: grey;
-    }
-    .upload-draft{
-        text-align: center;
-        color: white;
-        position: absolute;
-        top: 40%;
-        left: 39%;
-    }
-    .uploader-container input[type=file]{
-        position: absolute;
-        top: 0;
-        right: 0;
-        left: 0;
-        bottom: 0;
-        opacity: 0;
-    }
-    .progress {
-        height: 25px;
-        background: #262626;
-        padding: 5px;
-        overflow: visible;
-        border-radius: 20px;
-        border-top: 1px solid #000;
-        border-bottom: 1px solid #7992a8;
-        margin-top: 10px;
-    }
-
-    .progress .progress-bar {
-        border-radius: 20px;
-        position: relative;
-        animation: animate-positive 2s;
-    }
-
-    .progress .progress-value {
-        width: 62px;
-        display: block;
-        padding: 3px 7px;
-        font-size: 13px;
-        color: #fff;
-        border-radius: 4px;
-        background: #191919;
-        border: 1px solid #000;
-        position: absolute;
-        top: -40px;
-        right: -38px
-    }
-
-    .progress .progress-value:after {
-        content: "";
-        border-top: 10px solid #191919;
-        border-left: 10px solid transparent;
-        border-right: 10px solid transparent;
-        position: absolute;
-        bottom: -6px;
-        left: 26%;
-    }
-
-    .progress-bar.active {
-        animation: reverse progress-bar-stripes 0.40s linear infinite, animate-positive 2s;
-    }
-
-    @-webkit-keyframes animate-positive {
-        0% {
-            width: 0;
-        }
-    }
-
-    @keyframes animate-positive {
-        0% {
-            width: 0;
-        }
-    }
-</style>
-<body class="J_scroll_fixed">
-<div class="wrap">
-
-    <Admintemplate file="Common/Nav"/>
-    <div class="h_a">执行任务</div>
-    <form class=""  action="{:U('Transport/Index/task_log_create')}" method="post">
-        <div class="table_full">
-            <table width="100%">
-                <col class="th" />
-                <col width="300" />
-                <col />
-                <tr>
-                    <th>任务标题</th>
-                    <td>{$title}
-                        <input type="hidden" name="title" value="{$title}">
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-
-                <tr>
-                    <th>任务类型</th>
-                    <td>
-                        <if condition="$type EQ 1">导入任务</if>
-                        <if condition="$type EQ 2">导出任务</if>
-
-                        <input type="hidden" name="type" value="{$type}">
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-
-                <tr>
-                    <th>模型</th>
-                    <td>
-                        <?php $_model = M('Model')->where(['tablename' => $model])->find();?>
-                        {$_model['name']}
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-
-                <tr style="display: none;">
-                    <th>备注</th>
-                    <td>
-                        <input  class="input length_5 mr5" type="text" name="remark" value="">
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-
-                <tr style="display: none;">
-                    <th>关联任务ID</th>
-                    <td>
-                        <input type="text" name="task_id" value="{$id}">
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-                <tr>
-                    <th>进度条</th>
-                    <td>
+<block name="content">
+    <div id="app" style="padding: 8px;" v-cloak>
+        <el-card>
+            <h3>执行任务</h3>
+            <div class="filter-container">
+                <el-form>
+                    <el-form-item label="任务标题" label-width="120px" >
+                        <span>{{form.title}}</span>
+                    </el-form-item>
+                    <el-form-item label="任务类型" label-width="120px" >
+                        <span>{{form.type | typeName}}</span>
+                    </el-form-item>
+                    <el-form-item label="模型" label-width="120px">
+                        <span>{{form.model}}</span>
+                    </el-form-item>
+                    <el-form-item label="进度条" label-width="120px">
                         <div class="progress">
                             <div class="progress-bar progress-bar-info progress-bar-striped active" id="mt-progress-length"
                                  style="width: 0%;">
@@ -148,63 +24,179 @@
                             <span style="font-size: 14px;
                                 position: absolute;
                                 opacity: 0;
-                                left: 42%;" id="success_text">完成</span>
+                                left: 42%;
+                                top: 4px;
+                                color: #fff;" id="success_text">完成</span>
                         </div>
-                        <small>文件路径：<span id="result_file"></span></small>
-                    </td>
-                </tr>
-            </table>
-        </div>
-        <div class="" style="display:none;">
-            <div class="btn_wrap_pd">
-                <button class="btn btn_submit " type="submit">创建执行日志</button>
-                <button class="btn btn_submit " type="button" onclick="">立即执行</button>
+                        <small v-show="download">文件路径：<span id="result_file"></span><a :href="result_file">下载</a></small>
+                    </el-form-item>
+                </el-form>
             </div>
-        </div>
-    </form>
-    <!--结束-->
-</div>
-<script>
-    //进行轮询查询进度
-    var time = setInterval(function () {
-        var url = "{:U('Transport/index/getSpeed')}";
-        url = url + '&task_log_id=' + <?= $task_log_id ?>;
-        $.ajax({
-            url:url,
-            dataType:"json",
-            type:"get",
-            success(res){
-                $("#mt-progress-value").html(res.data.speed + "%");
+        </el-card>
+    </div>
 
-                var percentStr = String(res.data.speed);
+    <style>
+        .filter-container {
+            padding-bottom: 10px;
+        }
+        .el-form-item{
+            margin-bottom: 10px;
+        }
+        .progress {
+            width: 50%;
+            height: 15px;
+            background: #262626;
+            padding: 5px;
+            overflow: visible;
+            border-radius: 20px;
+            border-top: 1px solid #000;
+            border-bottom: 1px solid #7992a8;
+            margin-top: 10px;
+        }
 
-                if (percentStr == "100") {
-                    percentStr = "100.0";
-                }
-                if (percentStr == "100.0"){
-                    console.log('完成')
-                    clearTimeout(time)
-                    //背景成绿色
-                    $(".progress").css("background", "#15AD66");
-                    //归零 隐藏
-                    $("#mt-progress-length").css({"width": "0%", "opacity": "0"});
+        .progress .progress-bar {
+            border-radius: 20px;
+            position: relative;
+            animation: animate-positive 2s;
+        }
 
-                    $("#success_text").css({"opacity": "1"});
-                }
-                // 导出文件路径
-                if(res.data.result_file != ""){
-                    clearTimeout(time)
-                    // 打开文件
-                    $("#result_file").html(res.data.result_file)
-                    console.log(res.data.result_file)
+        .progress .progress-value {
+            width: 37px;
+            display: block;
+            padding: 0px 7px;
+            font-size: 14px;
+            color: #fff;
+            border-radius: 4px;
+            background: #191919;
+            border: 1px solid #000;
+            position: absolute;
+            top: -36px;
+            right: -31px;
+            height: 25px;
+            line-height: 26px;
+        }
 
-                }
-                percentStr = percentStr.substring(0, percentStr.indexOf("."));
-                $("#mt-progress-length").css("width", percentStr + "%");
+        .progress .progress-value:after {
+            content: "";
+            border-top: 10px solid #191919;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            position: absolute;
+            bottom: -6px;
+            left: 26%;
+        }
+
+        .progress-bar.active {
+            animation: reverse progress-bar-stripes 0.40s linear infinite, animate-positive 2s;
+        }
+
+        @-webkit-keyframes animate-positive {
+            0% {
+                width: 0;
             }
-        })
-    }, 2000);
-</script>
+        }
 
-</body>
-</html>
+        @keyframes animate-positive {
+            0% {
+                width: 0;
+            }
+        }
+
+    </style>
+    <script>
+        $(document).ready(function () {
+            new Vue({
+                el: '#app',
+                data: {
+                    task_log_id:"{:I('get.id')}",
+                    form: {
+                        title:'',
+                        description:'',
+                        type: 1,
+                        model: '',
+                        filename:""
+                    },
+                    tableKey: 0,
+                    download:false,
+                    result_file:''
+                },
+                watch: {},
+                filters: {
+                    typeName: function (type_id) {
+                        if(type_id == 1) return '导入任务';
+                        if(type_id == 2) return '导出任务';
+                    }
+                },
+                methods: {
+                    // 获取详情
+                    getInfo(task_log_id){
+                        var that = this;
+                        var url = "/Transport/Index/task_exec_info";
+                        if(task_log_id){
+                            url = url + '?id=' + task_log_id
+                        }
+                        $.ajax({
+                            url:url,
+                            dataType:"json",
+                            type:"get",
+                            success(res){
+                                console.log(res)
+                                that.form = res.data.task;
+                            }
+                        })
+                    },
+
+                    //进行轮询查询进度
+                    toSearch(task_log_id){
+                        var that = this
+                        var time = setInterval(function () {
+                            var url = "{:U('Transport/index/getSpeed')}";
+                            url = url + '&task_log_id=' + task_log_id;
+                            $.ajax({
+                                url:url,
+                                dataType:"json",
+                                type:"get",
+                                success(res){
+                                    $("#mt-progress-value").html(res.data.speed + "%");
+
+                                    var percentStr = String(res.data.speed);
+
+                                    if (percentStr == "100") {
+                                        percentStr = "100.0";
+                                    }
+                                    if (percentStr == "100.0"){
+                                        console.log('完成')
+                                        clearTimeout(time)
+                                        //背景成绿色
+                                        $(".progress").css("background", "#15AD66");
+                                        //归零 隐藏
+                                        $("#mt-progress-length").css({"width": "0%", "opacity": "0"});
+
+                                        $("#success_text").css({"opacity": "1"});
+                                    }
+                                    // 导出文件路径
+                                    if(res.data.result_file != ""){
+                                        clearTimeout(time)
+                                        $("#result_file").html(res.data.result_file)
+                                        that.download = true
+                                        that.result_file = res.data.result_file
+                                    }
+                                    percentStr = percentStr.substring(0, percentStr.indexOf("."));
+                                    $("#mt-progress-length").css("width", percentStr + "%");
+                                }
+                            })
+                        }, 2000);
+                    },
+
+                },
+                mounted: function () {
+                    if(this.task_log_id){
+                        this.getInfo(this.task_log_id)
+                        this.toSearch(this.task_log_id)
+                    }
+                },
+            })
+        })
+    </script>
+</block>
+

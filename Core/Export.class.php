@@ -316,17 +316,18 @@ class Export extends Transport {
         //设置表格并输出
         $this->phpexcel->getActiveSheet()->setTitle($this->filename);
         ob_end_clean();//清除缓冲区,避免乱码
-        header('Content-Type: application/vnd.ms-excel');
-        header("Content-Disposition: attachment;filename={$this->filename}.xls");
-        header('Cache-Control: max-age=0');
-        header('Cache-Control: max-age=1');
-        header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
-        header('Cache-Control: cache, must-revalidate');
-        header('Pragma: public'); // HTTP/1.0
-        header("Content-Transfer-Encoding:binary");
-        $objWriter = \PHPExcel_IOFactory::createWriter($this->phpexcel, 'Excel5');
-//        $objWriter->save('php://output');
+//        header('Content-Type: application/vnd.ms-excel');
+//        header("Content-Disposition: attachment;filename={$this->filename}.xls");
+//        header('Cache-Control: max-age=0');
+//        header('Cache-Control: max-age=1');
+//        header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+//        header('Cache-Control: cache, must-revalidate');
+//        header('Pragma: public'); // HTTP/1.0
+//        header("Content-Transfer-Encoding:binary");
 
+        $objWriter = new \PHPExcel_Writer_Excel5($this->phpexcel);
+//        $objWriter = \PHPExcel_IOFactory::createWriter($this->phpexcel, 'Excel5');
+//        $objWriter->save('php://output');
         $this->onFinishHandleData();
         $this->onFinishTransport();
 
@@ -354,9 +355,10 @@ class Export extends Transport {
         $fileName = $fileName ? $fileName : $title.'-'.date('YmdHis',time()) ;
         $_fileName = iconv("utf-8", "gb2312", $fileName);   //转码
         $_savePath = $savePath.$_fileName.'.xls';
-        $objWriter->save($_savePath);
+
+        $objWriter->save($_savePath); // 保存文件路径
+
         return $savePath.$fileName.'.xls';
-        exit;
     }
 
 

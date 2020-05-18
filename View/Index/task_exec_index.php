@@ -1,192 +1,195 @@
-<Admintemplate file="Common/Head"/>
+<extend name="../../Admin/View/Common/element_layout"/>
 
-<!--  simditor 上传组件 -->
-<script type="text/javascript" src="{$config_siteurl}statics/admin/simditor/scripts/module.min.js"></script>
-<script type="text/javascript" src="{$config_siteurl}statics/admin/simditor/scripts/uploader.min.js"></script>
+<block name="content">
+    <div id="app" style="padding: 8px;" v-cloak>
+        <el-card>
+            <h3>执行任务</h3>
+            <div class="filter-container">
+                <el-form>
+                    <el-form-item label="任务标题" label-width="120px" >
+                        <span>{{form.title}}</span>
+                    </el-form-item>
+                    <el-form-item label="任务类型" label-width="120px" >
+                        <span>{{form.type | typeName}}</span>
+                    </el-form-item>
+                    <el-form-item label="模型" label-width="120px">
+                        <span>{{form.model}}</span>
+                    </el-form-item>
+                    <el-form-item label="备注" label-width="120px">
+                        <el-input v-model="form.remark" style="width: 400px" placeholder=""></el-input>
+                    </el-form-item>
 
-<style>
-    .uploader-container{
-        position: relative;
-        width: 300px;
-        height: 60px;
-        background: grey;
-    }
-    .upload-draft{
-        text-align: center;
-        color: white;
-        position: absolute;
-        top: 40%;
-        left: 39%;
-    }
-    .uploader-container input[type=file]{
-        position: absolute;
-        top: 0;
-        right: 0;
-        left: 0;
-        bottom: 0;
-        opacity: 0;
-    }
-</style>
-<body class="J_scroll_fixed">
-<div class="wrap">
+                    <el-form-item label="导入文件" label-width="120px" required v-if="form.type == 1" >
+                        <span>
+                            <span slot="tip" class="el-upload__tip">仅支持xls格式</span>
+                            <el-upload
+                                    class="upload-demo"
+                                    action="{:U('Transport/Upload/upload')}"
+                                    :on-preview="handlePreview"
+                                    :on-remove="handleRemove"
+                                    :on-success="onUploadSuccess"
+                                    :before-remove="beforeRemove"
+                                    :limit="1"
+                                    :on-exceed="handleExceed"
+                                    :before-upload="checkType"
+                                    :file-list="form.fileList"
+                                    accept=".xls"
+                            >
+                                <el-button size="small" type="primary">点击上传</el-button>
+                            </el-upload>
+                        </span>
+                    </el-form-item>
 
-    <Admintemplate file="Common/Nav"/>
-    <div class="h_a">执行任务</div>
-    <form class=""  action="{:U('Transport/Index/task_log_create')}" method="post" id="form1">
-        <div class="table_full">
-            <table width="100%">
-                <col class="th" />
-                <col width="300" />
-                <col />
-                <tr>
-                    <th>任务标题</th>
-                    <td>{$title}
-                        <input type="hidden" name="title" value="{$title}">
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-
-                <tr>
-                    <th>任务类型</th>
-                    <td>
-                        <if condition="$type EQ 1">导入任务</if>
-                        <if condition="$type EQ 2">导出任务</if>
-
-                        <input type="hidden" name="type" value="{$type}" id="type_id">
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-
-                <tr>
-                    <th>模型</th>
-                    <td>
-                        <?php $_model = M('Model')->where(['tablename' => $model])->find();?>
-                        {$_model['name']}
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-
-                <tr>
-                    <th>备注</th>
-                    <td>
-                        <input  class="input length_5 mr5" type="text" name="remark" value="">
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-
-                <tr style="display: none;">
-                    <th>关联任务ID</th>
-                    <td>
-                        <input type="text" name="task_id" value="{$id}">
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-
-                <if condition="$type EQ 1">
-                    <tr>
-                        <th>导入文件</th>
-                        <td>
-                            <div class="uploader-container" >
-                                <p class="upload-draft"  >点击上传</p>
-                                <input type="file" name="upload_file"  accept="application/vnd.ms-excel,application/x-xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
-                            </div>
-                            <input type="text" class="input length_5 mr5" name="filename" value="" readonly accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></td>
-                        <td><div class="fun_tips"></div></td>
-                    </tr>
-                </if>
-
-                <if condition="$type EQ 2">
-                    <tr>
-                        <th>导出文件名</th>
-                        <td><input type="text" class="input length_5 mr5" name="filename" value=""></td>
-                        <td><div class="fun_tips">默认:标题+创建时间</div></td>
-                    </tr>
-                </if>
-
-            </table>
-        </div>
-        <div class="">
-            <div class="btn_wrap_pd">
-                <button class="btn btn_submit " type="submit">创建执行日志</button>
-                <button class="btn btn_submit " type="button" id="doPlay">创建并查看进度</button>
-                <button class="btn btn_submit " type="button" id="download">下载示例</button>
+                    <el-form-item label="导出文件名" label-width="120px" required v-if="form.type == 2">
+                        <el-input v-model="form.filename" style="width: 400px" placeholder="默认:标题+创建时间"></el-input>
+                    </el-form-item>
+                    <el-form-item label-width="120px" required>
+                        <el-button type="primary" size="mini" @click="toLog">创建执行日志</el-button>
+                        <el-button type="primary" size="mini" @click="toCreateView">创建并查看进度</el-button>
+                        <el-button type="primary" size="mini" @click="download">下载导入示例</el-button>
+                    </el-form-item>
+                </el-form>
             </div>
-        </div>
-        <small>Tip:导入导出前，请编辑任务，设置字段映射</small>
-    </form>
-    <!--结束-->
-</div>
+        </el-card>
+    </div>
 
-<script>
-    (function($){
-        //=== 文件上传
-        //TODO ： 添加上传进度条
-        var uploader = simple.uploader({
-            url: "{:U('Transport/Upload/upload')}"
-        });
-        ////上传前
-        uploader.on('beforeupload', function (e, file) {
-            // do something before upload
-            console.log('beforeupload')
-            console.log(file)
-        });
-        ////上传中
-        uploader.on('uploadprogress', function (e, file, loaded, total) {
-            // do something before upload
-            console.log('uploadprogress')
-        });
-        //上传成功响应
-        uploader.on('uploadsuccess', function (e, file, result) {
-            // do something before upload
+    <style>
+        .filter-container {
+            padding-bottom: 10px;
+        }
+        .el-form-item{
+            margin-bottom: 10px;
+        }
 
-//            console.log('uploadsuccess');
-//            console.log(e);
-//            console.log(file);
-//            console.log(result)
-//             result = JSON.parse(result);
-            // console.log(result)
-            if(result.status){
-                $('input[name=filename]').val(result.data.url);
-            }else{
-                alert(result.msg)
-            }
-        });
-        //上传网络错误时
-        uploader.on('uploaderror', function (e, file, xhr, status) {
-            // do something before upload
-            console.log('uploaderror')
-            console.log(xhl);
-            console.log(status)
-        });
+    </style>
+    <script>
+        $(document).ready(function () {
+            new Vue({
+                el: '#app',
+                data: {
+                    task_id:"{:I('get.id')}",
+                    form: {
+                        title:'',
+                        description:'',
+                        type: 1,
+                        model: '',
+                        filename:""
+                    },
+                    tableKey: 0,
+                },
+                watch: {},
+                filters: {
+                    typeName: function (type_id) {
+                        if(type_id == 1) return '导入任务';
+                        if(type_id == 2) return '导出任务';
+                    }
+                },
+                methods: {
+                    getInfo(task_id){
+                        var that = this;
+                        var url = "/Transport/Index/task_exec_index";
+                        if(task_id){
+                            url = url + '?id=' + task_id
+                        }
+                        $.ajax({
+                            url:url,
+                            dataType:"json",
+                            type:"get",
+                            success(res){
+                                that.form = res.data;
+                            }
+                        })
+                    },
 
-        $('input[name=upload_file]').on('change', function (e) {
-            uploader.upload(this.files);
-        });
+                    // 创建执行日志
+                    toLog(){
+                        var that = this;
+                        that.form.task_id = that.task_id
+                        that.form.id = ""
+                        $.ajax({
+                            url:"{:U('Transport/Index/task_log_create')}",
+                            type:"POST",
+                            data:that.form,
+                            dataType:"json",
+                            success(res){
+                                if(res.status){
+                                    layer.msg(res.msg, {time: 1000}, function(){
+                                        window.location.reload()
+                                    });
+                                }else{
+                                    layer.msg(res.msg);
+                                }
+                                console.log(res)
+                            }
+                        })
+                    },
+                    // 创建执行日志并查看进度
+                    toCreateView(){
+                        var that = this;
+                        that.form.task_id = that.task_id
+                        that.form.id = ""
+                        $.ajax({
+                            url:"{:U('Transport/Index/task_log_create')}",
+                            dataType:"json",
+                            type:"post",
+                            data:that.form,
+                            success(res){
+                                if(res.status){
+                                    layer.msg(res.msg, {time: 1000}, function(){
+                                        // 跳转到详情中
+                                        Ztbcms.openNewIframeByUrl('执行任务', '/Transport/Index/task_exec_info?id='+res.data)
+                                    });
+                                }else{
+                                    layer.msg(res.msg);
+                                }
+                            }
+                        })
 
-        //=== 文件上传 END
-
-        // 创建定时任务并查看详情
-        $("#doPlay").on('click',function () {
-            var type_id = $("#type_id").val()
-            if(type_id == 1 && $("input[name=filename]").val() == ""){
-                // 导入
-                alert('请导入文件')
-                return false;
-            }
-            // if(type_id == 2 && $("input[name=filename]").val() == ""){
-            //     // 导出
-            //     alert('请输入导出文件名')
-            //     return false;
-            // }
-            document.getElementById('form1').action = "{:U('Transport/Index/task_exec_info')}";
-            document.getElementById("form1").submit();
+                    },
+                    // 下载示例
+                    download(){
+                        window.location.href = '/Transport/index/down';
+                    },
+                    // 上传成功
+                    onUploadSuccess:function(response, file, fileList){
+                        if(response.status){
+                            this.form.filename = response.data.url
+                        }else{
+                            layer.msg(response.msg)
+                            return false;
+                        }
+                    },
+                    // 检查上传文件的类型
+                    checkType(file){
+                        const Xls = file.name.split('.');
+                        const isLt2M = file.size / 1024 / 1024 < 10;
+                        if(Xls[1] === 'xls'){}else{
+                            this.$message.error('上传文件只能是 xls/xlsx 格式')
+                            return false;
+                        }
+                    },
+                    handleRemove(file, fileList) {
+                        console.log(file, fileList);
+                    },
+                    handlePreview(file) {
+                        console.log(file);
+                    },
+                    handleExceed(files, fileList) {
+                        console.log(fileList)
+                        console.log(files)
+                        this.$message.warning(`当前限制选择 1 个文件`);
+                    },
+                    beforeRemove(file, fileList) {
+                        this.form.filename = ""
+                    }
+                },
+                mounted: function () {
+                    if(this.task_id){
+                        this.getInfo(this.task_id)
+                    }
+                },
+            })
         })
+    </script>
+</block>
 
-        // 下载示例文件
-        $("#download").on('click',function () {
-            window.location.href = '/Transport/index/down';
-        })
-    })(jQuery);
-</script>
-</body>
-</html>
