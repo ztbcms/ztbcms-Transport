@@ -68,8 +68,8 @@
             </div>
 
             <!-- 导出才需要设置筛选条件-->
-            <h3 style="margin: 10px 0px;">设置筛选条件</h3>
-            <div class="filter-container">
+            <h3 style="margin: 10px 0px;" v-if="form.type == 2">设置筛选条件</h3>
+            <div class="filter-container" v-if="form.type == 2">
                 <el-form :model="form">
                     <el-form-item label="设置筛选条件" label-width="120px">
                         字段：<el-input style="width: 150px" v-model="new_filter.new_filter_name"></el-input>
