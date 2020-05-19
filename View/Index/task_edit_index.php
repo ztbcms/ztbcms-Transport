@@ -286,10 +286,22 @@
                         if (index !== -1) {
                             this.fitterList.splice(index, 1)
                         }
+                    },
+                    getModelList(){
+                        var that = this;
+                        $.ajax({
+                            url:"{:U('task_create_index')}",
+                            dataType:"json",
+                            type:"get",
+                            success(res){
+                                that.modelList = res.data;
+                            }
+                        })
                     }
                 },
                 mounted: function () {
                     this.getInfo(this.task_id);
+                    this.getModelList();
                 },
             })
         })
