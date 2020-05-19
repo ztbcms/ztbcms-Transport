@@ -46,7 +46,7 @@
                     <el-form-item label-width="120px" required>
                         <el-button type="primary" size="mini" @click="toLog">创建执行日志</el-button>
                         <el-button type="primary" size="mini" @click="toCreateView">创建并查看进度</el-button>
-                        <el-button type="primary" size="mini" @click="download">下载导入示例</el-button>
+                        <el-button type="primary" size="mini" @click="download" v-if="form.type == 1">下载导入示例</el-button>
                     </el-form-item>
                 </el-form>
             </div>
