@@ -102,6 +102,11 @@
             }
         }
 
+        #mt-progress-length{
+            background: rgb(21, 173, 102);
+            height: 100%;
+        }
+
     </style>
     <script>
         $(document).ready(function () {
@@ -182,6 +187,7 @@
                                         that.result_file = res.data.result_file
                                     }
                                     percentStr = percentStr.substring(0, percentStr.indexOf("."));
+                                    $("#mt-progress-length").css("width", percentStr + "%");
                                     $("#mt-progress-length").css("width", percentStr + "%");
                                 }
                             })
