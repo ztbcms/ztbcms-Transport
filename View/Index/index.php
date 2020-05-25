@@ -48,7 +48,7 @@
                             删除
                         </el-button>
 
-                        <el-button size="mini" type="danger"
+                        <el-button size="mini" type="primary"
                                    @click="toCreateItem(scope.row.id)">
                             创建执行任务
                         </el-button>

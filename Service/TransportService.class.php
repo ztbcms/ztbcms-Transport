@@ -50,7 +50,7 @@ class TransportService extends BaseService
     static function task_exec_limit()
     {
         // 查询未执行的任务列表
-        $where['process_status'] = ['in', [0, 1]];
+        $where['process_status'] = 0;
 
         $TransportTaskLogModel = new TransportTaskLogModel();
         $list = $TransportTaskLogModel->where($where)->select();

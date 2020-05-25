@@ -31,7 +31,7 @@
                                     v-for="item in modelList"
                                     :key="item.value"
                                     :label="item.label"
-                                    :value="item.label">
+                                    :value="item.value">
                                 </el-option>
                             </el-select>
                         </template>
@@ -86,12 +86,12 @@
                             type:"post",
                             success(res){
                                 if(res.status){
-                                    layer.msg("添加成功", {time: 1000}, function () {
-                                        window.location.reload()
+                                    layer.msg(res.msg, {time: 1000}, function () {
+                                        window.location.href = '/Transport/Index/task_edit_index?id=' + res.data.id
                                     });
                                 }else{
-                                    layer.msg("添加失败", {time: 1000}, function () {
-                                        window.location.reload()
+                                    layer.msg(res.msg, {time: 1000}, function () {
+
                                     });
                                 }
                             }
@@ -100,7 +100,7 @@
                     getModelList(){
                         var that = this;
                         $.ajax({
-                            url:"{:U('task_create_index')}",
+                            url:"/Transport/Index/getEditTaskParam",
                             dataType:"json",
                             type:"get",
                             success(res){

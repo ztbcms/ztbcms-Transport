@@ -31,7 +31,7 @@
                                         v-for="item in modelList"
                                         :key="item.value"
                                         :label="item.label"
-                                        :value="item.label">
+                                        :value="item.value">
                                 </el-option>
                             </el-select>
                         </template>
@@ -39,31 +39,6 @@
                     <el-form-item label-width="120px" required>
                         <el-button type="primary" @click="doEdit">提交</el-button>
                     </el-form-item>
-                </el-form>
-            </div>
-
-            <h3 style="margin: 10px 0px;">设置字段映射</h3>
-            <div class="filter-container">
-                <el-form :model="form">
-                    <el-form-item label="新增字段映射" label-width="120px" required>
-                        内部字段名：<el-input style="width: 150px" placeholder="" v-model="new_field.new_field_name"></el-input>
-                        外部名称：<el-input style="width: 150px" placeholder="" v-model="new_field.new_export_name"></el-input>
-                        过滤处理器：<el-input style="width: 150px" placeholder="" v-model="new_field.new_filter_name"></el-input>
-                        <el-button type="primary" @click="addField">提交</el-button>
-                    </el-form-item>
-
-                    <el-form-item label="当前字段映射" label-width="120px" required>
-                        <div v-for="item,index in FieldList" style="margin-bottom: 5px;">
-                            内部字段名：<el-input style="width: 150px" placeholder="" v-model="item.field_name"></el-input>
-                            外部名称：<el-input style="width: 150px" placeholder="" v-model="item.export_name"></el-input>
-                            过滤处理器：<el-input style="width: 150px" placeholder="" v-model="item.filter"></el-input>
-                            <el-button type="danger" @click.prevent="removeField(item)">删除</el-button>
-                        </div>
-                    </el-form-item>
-                    <el-form-item label-width="120px" required>
-                        <el-button type="primary" @click="doUpdateField">提交</el-button>
-                    </el-form-item>
-
                 </el-form>
             </div>
 
@@ -82,7 +57,7 @@
                             </el-option>
                         </el-select>
                         值：<el-input style="width: 150px" v-model="new_filter.new_value"></el-input>
-                        <el-button type="primary" @click="addFitter">提交</el-button>
+                        <el-button type="primary" @click="addFitter">添加</el-button>
                     </el-form-item>
 
                     <el-form-item label="当前筛选条件" label-width="120px" required>
@@ -99,6 +74,33 @@
                     </el-form-item>
                 </el-form>
             </div>
+
+            <h3 style="margin: 10px 0px;">设置字段映射</h3>
+            <div class="filter-container">
+                <el-form :model="form">
+                    <el-form-item label="新增字段映射" label-width="120px" required>
+                        内部字段名：<el-input style="width: 150px" placeholder="" v-model="new_field.new_field_name"></el-input>
+                        外部名称：<el-input style="width: 150px" placeholder="" v-model="new_field.new_export_name"></el-input>
+                        过滤处理器：<el-input style="width: 150px" placeholder="" v-model="new_field.new_filter_name"></el-input>
+                        <el-button type="primary" @click="addField">添加</el-button>
+                    </el-form-item>
+
+                    <el-form-item label="当前字段映射" label-width="120px" required>
+                        <div v-for="item,index in FieldList" style="margin-bottom: 5px;">
+                            内部字段名：<el-input style="width: 150px" placeholder="" v-model="item.field_name"></el-input>
+                            外部名称：<el-input style="width: 150px" placeholder="" v-model="item.export_name"></el-input>
+                            过滤处理器：<el-input style="width: 150px" placeholder="" v-model="item.filter"></el-input>
+                            <el-button type="danger" @click.prevent="removeField(item)">删除</el-button>
+                        </div>
+                    </el-form-item>
+                    <el-form-item label-width="120px" required>
+                        <el-button type="primary" @click="doUpdateField">提交</el-button>
+                    </el-form-item>
+
+                </el-form>
+            </div>
+
+
         </el-card>
     </div>
 
@@ -200,7 +202,7 @@
                     doEdit: function () {
                         var that = this;
                         $.ajax({
-                            url:"{:U('task_edit')}",
+                            url:"Transport/index/task_edit",
                             dataType:"json",
                             data:that.form,
                             type:"post",
@@ -290,7 +292,7 @@
                     getModelList(){
                         var that = this;
                         $.ajax({
-                            url:"{:U('task_create_index')}",
+                            url:"/Transport/Index/getEditTaskParam",
                             dataType:"json",
                             type:"get",
                             success(res){
@@ -300,8 +302,10 @@
                     }
                 },
                 mounted: function () {
-                    this.getInfo(this.task_id);
                     this.getModelList();
+                    if(this.task_id){
+                        this.getInfo(this.task_id);
+                    }
                 },
             })
         })

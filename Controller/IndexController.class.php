@@ -56,22 +56,22 @@ class IndexController extends AdminBase {
         $this->display();
     }
 
+    function getEditTaskParam(){
+        //返回模型列表
+        $list = M('Model')->select();
+        $newList = [];
+        foreach ($list as $item){
+            $obj['value'] = $item['tablename'];
+            $obj['label'] = $item['name'];
+            $newList[] = $obj;
+        }
+        $this->ajaxReturn(self::createReturn(true,$newList));
+    }
+
     /**
      * 创建任务页
      */
     function task_create_index() {
-        if(IS_AJAX){
-            //返回模型列表
-            $list = M('Model')->select();
-            $newList = [];
-            foreach ($list as $item){
-                $obj['value'] = $item['modelid'];
-                $obj['label'] = $item['name'];
-                $newList[] = $obj;
-            }
-            $this->ajaxReturn(self::createReturn(true,$newList));
-        }
-
         $this->display();
     }
 
@@ -82,10 +82,10 @@ class IndexController extends AdminBase {
         $data = I('post.');
 
         if ($this->db->create($data)) {
-            $this->db->add();
-            $this->success('创建成功');
+            $id = $this->db->add();
+            $this->ajaxReturn(self::createReturn(true, ['id' => $id], '创建成功'));
         } else {
-            $this->error($this->db->getDbError());
+            $this->ajaxReturn(self::createReturn(false, null, '创建失败'));
         }
 
     }
