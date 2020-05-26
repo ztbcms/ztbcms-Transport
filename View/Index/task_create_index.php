@@ -31,7 +31,7 @@
                                     v-for="item in modelList"
                                     :key="item.value"
                                     :label="item.label"
-                                    :value="item.label">
+                                    :value="item.value">
                                 </el-option>
                             </el-select>
                         </template>
@@ -77,6 +77,7 @@
                 watch: {},
                 filters: {},
                 methods: {
+                    //添加任务
                     doEdit: function () {
                         var that = this;
                         $.ajax({
@@ -97,6 +98,7 @@
                             }
                         })
                     },
+                    //获取模型列表
                     getModelList(){
                         var that = this;
                         $.ajax({

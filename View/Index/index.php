@@ -136,7 +136,7 @@
                         }
                         Ztbcms.openNewIframeByUrl('创建执行任务', url )
                     },
-                    // 删任务
+                    // 删除任务
                     toDelete(id){
                         var that = this;
                         var url = "/Transport/Index/task_delete";
@@ -164,7 +164,7 @@
                             layer.closeAll();
                         });
                     },
-                    //获取列表数据
+                    //获取任务列表数据
                     getList(){
                         var that = this;
                         $.ajax({

@@ -60,7 +60,6 @@
         .el-form-item{
             margin-bottom: 10px;
         }
-
     </style>
     <script>
         $(document).ready(function () {
@@ -179,6 +178,7 @@
                         console.log(files)
                         this.$message.warning(`当前限制选择 1 个文件`);
                     },
+                    // 移除文件
                     beforeRemove(file, fileList) {
                         this.form.filename = ""
                     }

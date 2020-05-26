@@ -170,13 +170,12 @@
                                         percentStr = "100.0";
                                     }
                                     if (percentStr == "100.0"){
-                                        console.log('完成')
-                                        clearTimeout(time)
+                                        clearTimeout(time);
                                         //背景成绿色
                                         $(".progress").css("background", "#15AD66");
-                                        //归零 隐藏
+                                        //进度条归零并隐藏
                                         $("#mt-progress-length").css({"width": "0%", "opacity": "0"});
-
+                                        //显示完成字样
                                         $("#success_text").css({"opacity": "1"});
                                     }
                                     // 导出文件路径
@@ -193,7 +192,6 @@
                             })
                         }, 2000);
                     },
-
                 },
                 mounted: function () {
                     if(this.task_log_id){

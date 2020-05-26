@@ -140,6 +140,7 @@
                             label: '导出任务'
                         }
                     ],
+                    //筛选条件符号
                     operator:[
                         {
                             value: 'EQ',
@@ -170,7 +171,7 @@
                             label: 'LIKE'
                         },
                     ],
-                    modelList:[], // 模型列表
+                    modelList:[],  //模型列表
                     tableKey: 0,
                     FieldList:[],  //映射字段
                     fitterList:[], //筛选条件
@@ -274,19 +275,21 @@
                             }
                         })
                     },
-                    // 移出映射字段
+                    // 移除映射字段
                     removeField(item) {
                         var index = this.FieldList.indexOf(item)
                         if (index !== -1) {
                             this.FieldList.splice(index, 1)
                         }
                     },
+                    // 移除筛选条件
                     removeFilter(item){
                         var index = this.fitterList.indexOf(item)
                         if (index !== -1) {
                             this.fitterList.splice(index, 1)
                         }
                     },
+                    // 获取模型列表数据
                     getModelList(){
                         var that = this;
                         $.ajax({

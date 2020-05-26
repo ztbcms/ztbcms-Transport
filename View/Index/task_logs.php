@@ -113,6 +113,7 @@
                         }
                         window.open(url)
                     },
+                    //获取执行任务记录
                     getList: function () {
                         var that = this;
                         $.ajax({

@@ -21,9 +21,5 @@ class ImportDemo extends Cron
     public function run($cronId)
     {
         TransportService::task_exec_limit();
-        //模拟长时间执行
-//        sleep(5);
-        //模拟异常Exception
-//        throw new Exception('突然出错了');
     }
 }

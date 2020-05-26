@@ -24,9 +24,9 @@ class Install extends InstallBase
 
     //基本安装结束后的回调
     public function end() {
-        // 添加定时任务  执行url /Cron/index/index
+        // 添加定时任务
         $CronModel = new CronModel();
-        $check = $CronModel->where(['type'=>1,'subject'=>'导入与导出定时任务'])->find();
+        $check = $CronModel->where(['cron_file' => 'Transport\CronScript\ImportDemo'])->find();
         if(!$check){
             $addData = [
                 'subject'=> '导入与导出定时任务',

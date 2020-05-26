@@ -65,7 +65,7 @@ class IndexController extends AdminBase {
             $list = M('Model')->select();
             $newList = [];
             foreach ($list as $item){
-                $obj['value'] = $item['modelid'];
+                $obj['value'] = $item['tablename'];
                 $obj['label'] = $item['name'];
                 $newList[] = $obj;
             }
@@ -287,7 +287,6 @@ class IndexController extends AdminBase {
             $task_conditions = M('TransportCondition')->where(['task_id' => $task['id']])->select();
             $where = [];
             foreach ($task_conditions as $index => $condition) {
-
                 if (!empty($condition)) {
                     $filter = trim($condition['filter']);
                     $operator = trim($condition['operator']);
@@ -326,18 +325,15 @@ class IndexController extends AdminBase {
         } else {
             //导入
             $import = new Import($task_log_id);
-
             $import->setModel($task['model']);
 
             //字段映射
             $fields = [];
             $task_fields = M('TransportField')->where(['task_id' => $task['id']])->select();
             foreach ($task_fields as $index => $field) {
-
                 $fields[] = new ExportField($field['field_name'], $field['export_name'], $field['filter']);
             }
             $import->setFields($fields);
-
             $import->setFilename(getcwd() . $task_log['filename']);
 
             if ($isPreview) {
@@ -345,7 +341,6 @@ class IndexController extends AdminBase {
             } else {
                 //开始导入
                 $import->import();
-//                $this->ajaxReturn(createReturn(true,'','导入成功'));
                 $this->success('导入成功');
             }
         }
@@ -418,9 +413,6 @@ class IndexController extends AdminBase {
         if($type == TransportTaskModel::TYPE_IMPORT && empty($filename)){
             $this->error('请上传文件');
         }
-//        if($type == TransportTaskModel::TYPE_EXPORT && empty($filename)){
-//            $this->error('请输入导出文件名');
-//        }
         $id = $TransportTaskLogModel->data($data)->add();
         if ($id) {
             //跳转
@@ -443,7 +435,6 @@ class IndexController extends AdminBase {
             $task = $TransportTaskModel->where(['id'=>$task_log['task_id']])->find();
             $this->ajaxReturn(self::createReturn(true,['task'=>$task,'task_log'=>$task_log]));
         }
-//
 //        $data = I('post.');
 //        $data['inputtime'] = time();
 //        // 校验上传文件

@@ -14,7 +14,7 @@ use Transport\Model\TransportTaskModel;
 use Transport\Core\Export;
 use Transport\Core\ExportField;
 /**
- * 导入服务
+ * 导入与导出服务
  * Class TransportService
  * @package Transport\Service
  */
@@ -119,21 +119,29 @@ class TransportService extends BaseService
                 foreach ($model_field as $k => $v) {
                     $_data[$v] = $val[$k];
                 }
-                // 插入数据
-                $sql = M($task_model)->fetchSql(true)->add($_data);
-                $res = M($task_model)->execute($sql);
-                if ($res) {
-                    // 更新任务累加成功数
-                    $TransportTaskLogModel->where(['id' => $task_log['id']])->setInc('success_amount');
-                    $TaskLogInfo = $TransportTaskLogModel->where(['id' => $task_log['id']])->find();
-                    $use_time = time() - $TaskLogInfo['start_transport_time'];
-                    // 更新使用时间与结果
-                    $result = 1;// 成功
-                    if ($TaskLogInfo['success_amount'] < $TaskLogInfo['total_amount']) {
-                        $result = 2; //失败
+                // 如果发现出错，然后跳过这个任务
+                try{
+                    // 插入数据
+                    $sql = M($task_model)->fetchSql(true)->add($_data);
+                    $res = M($task_model)->execute($sql);
+                    if ($res) {
+                        // 更新任务累加成功数
+                        $TransportTaskLogModel->where(['id' => $task_log['id']])->setInc('success_amount');
+                        $TaskLogInfo = $TransportTaskLogModel->where(['id' => $task_log['id']])->find();
+                        $use_time = time() - $TaskLogInfo['start_transport_time'];
+                        // 更新使用时间与结果
+                        $result = 1;// 成功
+                        if ($TaskLogInfo['success_amount'] < $TaskLogInfo['total_amount']) {
+                            $result = 2; //失败
+                        }
+                        $TransportTaskLogModel->where(['id' => $task_log['id']])
+                            ->save(['end_transport_time' => time(), 'use_time' => $use_time, 'result' => $result]);
                     }
+                }
+                catch(\Exception $e){
+                    $result = 2; //失败
                     $TransportTaskLogModel->where(['id' => $task_log['id']])
-                        ->save(['end_transport_time' => time(), 'use_time' => $use_time, 'result' => $result]);
+                        ->save(['end_transport_time' => time(), 'result' => $result , 'process_status' => 2 ]);
                 }
             }
         } else {
