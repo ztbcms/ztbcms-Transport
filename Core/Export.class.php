@@ -26,6 +26,9 @@ class Export extends Transport {
     //导出文件名
     protected $filename = 'export';
 
+    // 保存路径
+    protected $savePath = '';
+
     //导出表格内容
     protected $_content = '';
 
@@ -47,7 +50,7 @@ class Export extends Transport {
     private $phpexcel = null;
 
     public function __construct($task_log_id = '') {
-        include(APP_PATH . '/Transport/Libs/PHPExcel.php');
+        include_once(APP_PATH . '/Transport/Libs/PHPExcel.php');
 
         $this->phpexcel = new \PHPExcel();
 
@@ -72,7 +75,6 @@ class Export extends Transport {
         $filter = $this->getConditions();
         $filterString = $this->getFilterString();
         $db = M($this->getModel())->where($filter);
-
         if (!empty($filterString)) {
             $db = $db->where($filter);
         }
@@ -199,7 +201,6 @@ class Export extends Transport {
             $data = $this->getExportData();
             $this->setData($data);
         }
-
         //整理数据到excel表格
         $this->loadExcelData();
 
@@ -220,7 +221,6 @@ class Export extends Transport {
         foreach ($excel_data as $index => $row){
             $export_data []= $row;
         }
-
         foreach ($export_data as $key => $row) {
 
             $this->onStartHandleRowData();
@@ -239,21 +239,64 @@ class Export extends Transport {
 
         //设置表格并输出
         $this->phpexcel->getActiveSheet()->setTitle($this->filename);
-        ob_end_clean();//清除缓冲区,避免乱码
-        header('Content-Type: application/vnd.ms-excel');
-        header("Content-Disposition: attachment;filename={$this->filename}.xls");
-        header('Cache-Control: max-age=0');
-        header('Cache-Control: max-age=1');
-        header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
-        header('Cache-Control: cache, must-revalidate');
-        header('Pragma: public'); // HTTP/1.0
+        if (empty($this->savePath)) {
+            ob_end_clean();//清除缓冲区,避免乱码
+            header('Content-Type: application/vnd.ms-excel');
+            header("Content-Disposition: attachment;filename={$this->filename}.xls");
+            header('Cache-Control: max-age=0');
+            header('Cache-Control: max-age=1');
+            header('Last-Modified: '.gmdate('D, d M Y H:i:s').' GMT');
+            header('Cache-Control: cache, must-revalidate');
+            header('Pragma: public'); // HTTP/1.0
+            $this->savePath = 'php://output';
+        }
+
         $objWriter = \PHPExcel_IOFactory::createWriter($this->phpexcel, 'Excel5');
-        $objWriter->save('php://output');
+        $objWriter->save($this->savePath);
 
         $this->onFinishHandleData();
 
         $this->onFinishTransport();
-        exit;
+    }
+
+
+    /**
+     *
+     * 生成 XLS 文件 并保存到本地
+     * @param string $fileName
+     * @param string $title
+     * @return bool|string
+     * @throws \PHPExcel_Exception
+     * @throws \PHPExcel_Reader_Exception
+     * @throws \PHPExcel_Writer_Exception
+     */
+    public function exportXlsSrc($fileName = "",$title = "") {
+        // 返回保存地址
+        $path = "d/file/module_transport/".date("Ymd",time());
+        $savePath = "/".$path;
+        $absolute_save_path = SITE_PATH . $path;
+        // 检查上传目录
+        if (!is_dir($absolute_save_path)) {
+            // 尝试创建目录
+            if (!mkdir($absolute_save_path, 0766, true)) {
+                $this->error = '目录 ' . $savePath . ' 无法创建';
+                throw_exception('目录 ' . $savePath . ' 无法创建');
+            }
+        } else {
+            if (!is_writeable($absolute_save_path)) {
+                $this->error = '目录' . $savePath . '不可写';
+                throw_exception('目录' . $savePath . '不可写');
+            }
+        }
+
+        $fileName = $fileName ? $fileName : $title.'-'.date('YmdHis',time()) ;
+        $_savePath = $savePath.'/'.$fileName.'.xls';
+        $_absolute_savePath = $absolute_save_path.'/'.$fileName.'.xls';
+
+        $this->setSavePath($_absolute_savePath);
+        $this->exportXls();
+
+        return $_savePath;
     }
 
 
@@ -340,6 +383,22 @@ class Export extends Transport {
      */
     public function setCondition($condition) {
         $this->condition = $condition;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSavePath()
+    {
+        return $this->savePath;
+    }
+
+    /**
+     * @param  string  $savePath
+     */
+    public function setSavePath($savePath)
+    {
+        $this->savePath = $savePath;
     }
 
     private function loadHeaders(){

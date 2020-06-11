@@ -1,300 +1,314 @@
-<Admintemplate file="Common/Head"/>
-<body class="J_scroll_fixed">
-<div class="wrap">
+<extend name="../../Admin/View/Common/element_layout"/>
+
+<block name="content">
+    <div id="app" style="padding: 8px;" v-cloak>
+        <el-card>
+            <h3>编辑任务</h3>
+            <div class="filter-container">
+                <el-form :model="form">
+                    <el-form-item label="任务标题" label-width="120px" required>
+                        <el-input v-model="form.title" style="width: 400px" placeholder=""></el-input>
+                    </el-form-item>
+                    <el-form-item label="任务描述" label-width="120px" required>
+                        <el-input v-model="form.description" style="width: 400px" placeholder=""></el-input>
+                    </el-form-item>
+                    <el-form-item label="任务类型" label-width="120px">
+                        <template>
+                            <el-select v-model="form.type" clearable placeholder="请选择">
+                                <el-option
+                                        v-for="item in typeList"
+                                        :key="item.value"
+                                        :label="item.label"
+                                        :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </template>
+                    </el-form-item>
+                    <el-form-item label="模型" label-width="120px">
+                        <template>
+                            <el-select v-model="form.model"  placeholder="请选择" clearable>
+                                <el-option
+                                        v-for="item in modelList"
+                                        :key="item.value"
+                                        :label="item.label"
+                                        :value="item.value">
+                                </el-option>
+                            </el-select>
+                        </template>
+                    </el-form-item>
+                    <el-form-item label-width="120px" required>
+                        <el-button type="primary" @click="doEdit">提交</el-button>
+                    </el-form-item>
+                </el-form>
+            </div>
+
+            <!-- 导出才需要设置筛选条件-->
+            <h3 style="margin: 10px 0px;" v-if="form.type == 2">设置筛选条件</h3>
+            <div class="filter-container" v-if="form.type == 2">
+                <el-form :model="form">
+                    <el-form-item label="设置筛选条件" label-width="120px">
+                        字段：<el-input style="width: 150px" v-model="new_filter.new_filter_name"></el-input>
+                        条件：<el-select v-model="new_filter.new_operator" clearable placeholder="请选择" style="width: 100px;">
+                            <el-option
+                                    v-for="item in operator"
+                                    :key="item.value"
+                                    :label="item.label"
+                                    :value="item.value">
+                            </el-option>
+                        </el-select>
+                        值：<el-input style="width: 150px" v-model="new_filter.new_value"></el-input>
+                        <el-button type="primary" @click="addFitter">添加</el-button>
+                    </el-form-item>
+
+                    <el-form-item label="当前筛选条件" label-width="120px" required>
+                        <div v-for="item in fitterList" style="margin-bottom: 5px;">
+                            字段：<el-input style="width: 150px" placeholder="" v-model="item.filter"></el-input>
+                            条件：<el-input style="width: 100px" placeholder="" v-model="item.operator" disabled></el-input>
+                            值：<el-input style="width: 150px" placeholder="" v-model="item.value"></el-input>
+                            <el-button type="danger" @click.prevent="removeFilter(item)">删除</el-button>
+                        </div>
+                    </el-form-item>
+
+                    <el-form-item label-width="120px" required>
+                        <el-button type="primary" @click="doUpdateCondition">提交</el-button>
+                    </el-form-item>
+                </el-form>
+            </div>
+
+            <h3 style="margin: 10px 0px;">设置字段映射</h3>
+            <div class="filter-container">
+                <el-form :model="form">
+                    <el-form-item label="新增字段映射" label-width="120px" required>
+                        内部字段名：<el-input style="width: 150px" placeholder="" v-model="new_field.new_field_name"></el-input>
+                        外部名称：<el-input style="width: 150px" placeholder="" v-model="new_field.new_export_name"></el-input>
+                        过滤处理器：<el-input style="width: 150px" placeholder="" v-model="new_field.new_filter_name"></el-input>
+                        <el-button type="primary" @click="addField">添加</el-button>
+                    </el-form-item>
+
+                    <el-form-item label="当前字段映射" label-width="120px" required>
+                        <div v-for="item,index in FieldList" style="margin-bottom: 5px;">
+                            内部字段名：<el-input style="width: 150px" placeholder="" v-model="item.field_name"></el-input>
+                            外部名称：<el-input style="width: 150px" placeholder="" v-model="item.export_name"></el-input>
+                            过滤处理器：<el-input style="width: 150px" placeholder="" v-model="item.filter"></el-input>
+                            <el-button type="danger" @click.prevent="removeField(item)">删除</el-button>
+                        </div>
+                    </el-form-item>
+                    <el-form-item label-width="120px" required>
+                        <el-button type="primary" @click="doUpdateField">提交</el-button>
+                    </el-form-item>
+
+                </el-form>
+            </div>
+
+
+        </el-card>
+    </div>
 
     <style>
-        .condition_item, .field_item{
-            padding: 6px;
+        .filter-container {
+            padding-bottom: 10px;
         }
 
-        input:read-only{
-            background: gainsboro;
-        }
     </style>
+    <script>
+        $(document).ready(function () {
+            new Vue({
+                el: '#app',
+                data: {
+                    task_id: "{:I('get.id')}",
+                    form: {
+                        title:'',
+                        description:'',
+                        type: '1',
+                        model: '',
+                    },
+                    new_field:{
+                        new_field_name:'',
+                        new_export_name:'',
+                        new_filter_name:'',
+                    },
+                    new_filter:{
+                        new_filter_name:'',
+                        new_operator:'EQ',
+                        new_value:'',
+                    },
+                    typeList: [
+                        {
+                            value: '1',
+                            label: '导入任务'
+                        },
+                        {
+                            value: '2',
+                            label: '导出任务'
+                        }
+                    ],
+                    operator:[
+                        {
+                            value: 'EQ',
+                            label: '='
+                        },
+                        {
+                            value: 'NEQ',
+                            label: '!='
+                        },
+                        {
+                            value: 'GT',
+                            label: '>'
+                        },
+                        {
+                            value: 'EGT',
+                            label: '>='
+                        },
+                        {
+                            value: 'LT',
+                            label: '<'
+                        },
+                        {
+                            value: 'ELT',
+                            label: '<='
+                        },
+                        {
+                            value: 'LIKE',
+                            label: 'LIKE'
+                        },
+                    ],
+                    modelList:[], // 模型列表
+                    tableKey: 0,
+                    FieldList:[],  //映射字段
+                    fitterList:[], //筛选条件
+                },
+                watch: {},
+                filters: {},
+                methods: {
+                    getInfo(id){
+                      var that = this;
+                      var url = "{:U('Transport/index/task_edit_index')}";
+                      url = url + "&id=" + id;
+                      $.ajax({
+                          url: url,
+                          dataType:"json",
+                          type:"get",
+                          success(res){
+                              if(res.status){
+                                  that.form = res.data.task
+                                  that.form.task_id = that.task_id
+                                  that.FieldList = res.data.task_fields
+                                  that.fitterList = res.data.task_conditions
+                              }
+                          }
+                      })
 
-    <Admintemplate file="Common/Nav"/>
+                    },
+                    doEdit: function () {
+                        var that = this;
+                        $.ajax({
+                            url:"Transport/index/task_edit",
+                            dataType:"json",
+                            data:that.form,
+                            type:"post",
+                            success(res){
+                                if(res.status){
+                                    layer.msg("修改成功", {time: 1000}, function () {
+                                        if (window !== window.parent) {
+                                            setTimeout(function () {
+                                                window.parent.layer.closeAll();
+                                            }, 1000);
+                                        }
+                                    });
+                                }else{
+                                    layer.msg("修改失败", {time: 1000}, function () {
+                                        if (window !== window.parent) {
+                                            setTimeout(function () {
+                                                window.parent.layer.closeAll();
+                                            }, 1000);
+                                        }
+                                    });
+                                }
+                            }
+                        })
+                    },
+                    // 添加映射字段
+                    addField(){
+                        this.FieldList.push({
+                            field_name: this.new_field.new_field_name,
+                            export_name: this.new_field.new_export_name,
+                            filter: this.new_field.new_filter_name
+                        });
+                    },
+                    // 添加筛选字段
+                    addFitter(){
+                        this.fitterList.push({
+                            filter: this.new_filter.new_filter_name,
+                            operator: this.new_filter.new_operator,
+                            value: this.new_filter.new_value,
+                        });
+                    },
+                    // 更新映射字段
+                    doUpdateField(){
+                        var that = this;
+                        $.ajax({
+                            url:"{:U('task_update_field')}",
+                            dataType:"json",
+                            data: {
+                                task_id: that.task_id,
+                                list:that.FieldList
+                            },
+                            type:"post",
+                            success(res){
+                                layer.msg(res.msg, {time: 1000});
+                            }
+                        })
+                    },
 
-    <div class="h_a">编辑任务</div>
-    <form class="J_ajaxForm"  action="{:U('Transport/Index/task_edit')}" method="post">
-        <div class="table_full">
-            <table width="100%">
-                <col class="th" />
-                <col width="400" />
-                <col />
-                <tr>
-                    <th>任务标题</th>
-                    <td><input type="text" class="input length_5 mr5" name="title" value="{$title}"></td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
+                    //更新筛选条件信息
+                    doUpdateCondition(){
+                        var that = this;
+                        $.ajax({
+                            url:"{:U('task_update_condition')}",
+                            dataType:"json",
+                            data: {
+                                task_id: that.task_id,
+                                list:that.fitterList
+                            },
+                            type:"post",
+                            success(res){
+                                layer.msg(res.msg, {time: 1000});
+                            }
+                        })
+                    },
+                    // 移出映射字段
+                    removeField(item) {
+                        var index = this.FieldList.indexOf(item)
+                        if (index !== -1) {
+                            this.FieldList.splice(index, 1)
+                        }
+                    },
+                    removeFilter(item){
+                        var index = this.fitterList.indexOf(item)
+                        if (index !== -1) {
+                            this.fitterList.splice(index, 1)
+                        }
+                    },
+                    getModelList(){
+                        var that = this;
+                        $.ajax({
+                            url:"/Transport/Index/getEditTaskParam",
+                            dataType:"json",
+                            type:"get",
+                            success(res){
+                                that.modelList = res.data;
+                            }
+                        })
+                    }
+                },
+                mounted: function () {
+                    this.getModelList();
+                    if(this.task_id){
+                        this.getInfo(this.task_id);
+                    }
+                },
+            })
+        })
+    </script>
+</block>
 
-                <tr>
-                    <th>任务描述</th>
-                    <td><input type="text" class="input length_5 mr5" name="description" value="{$description}"></td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-                <tr>
-                    <th>任务类型</th>
-                    <td>
-                        <select  name="type" class="mr10">
-                            <option value="1" <?php echo ($type == 1?'selected':'')?>>导入任务</option>
-                            <option value="2" <?php echo ($type == 2?'selected':'')?>>导出任务</option>
-                        </select>
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-                <tr>
-                    <th>模型</th>
-                    <td>
-                        <?php $models = M('Model')->select();?>
-                        <select  name="model" class="mr10">
-                            <volist name="models" id="m">
-                                <option value="{$m['tablename']}" <?php echo ($model == $m['tablename']?'selected':'')?>>{$m['name']}</option>
-                            </volist>
-                        </select>
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-
-                <tr style="display: none;">
-                    <th>ID</th>
-                    <td>
-                        <input type="text" value="{$id}" name="task_id">
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-                <tr>
-                    <th>操作</th>
-                    <td>
-                        <button class="btn btn_submit J_ajax_submit_btn" type="submit">提交</button>
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-            </table>
-        </div>
-    </form>
-
-
-    <!--  导出才需要设置筛选条件  -->
-    <if condition="$type EQ 2">
-        <div class="h_a">设置筛选条件</div>
-        <form class="J_ajaxForm"  action="{:U('Transport/Index/task_update_condition')}" method="post" id="condition_form">
-            <div class="table_full">
-                <table width="100%">
-                    <col class="th" />
-                    <col width="1000" />
-                    <tr>
-                        <th>新增筛选条件</th>
-                        <td>
-                            <label>字段: </label>
-                            <input type="text" class="input length_3 mr2" name="new_filter" value="">
-
-                            <label>条件:</label>
-                            <select name="new_operator" class="select_1">
-                                <option value="EQ"> = </option>
-                                <option value="NEQ"> != </option>
-                                <option value="GT"> > </option>
-                                <option value="EGT"> >= </option>
-                                <option value="LT"> < </option>
-                                <option value="ELT"> <= </option>
-                                <option value="LIKE"> LIKE </option>
-                            </select>
-
-                            <label>值: </label>
-                            <input type="text" class="input length_3 mr2" name="new_value" value="">
-
-                            <a class="btn btn-success" onclick="addCondition()"><i class="iconfont icon-add1"></i>新增</a>
-                        </td>
-                        <td><div class="fun_tips"></div></td>
-                    </tr>
-
-                    <tr>
-                        <th>当前筛选条件</th>
-                        <template id="tpl_condition">
-                            <div id="condition_{condition_id}" class="condition_item">
-                                <label>字段: </label>
-                                <input type="text" class="input length_3 mr2" name="condition_filter[]" value="{new_filter}">
-
-                                <label>条件: </label>
-                                <input type="text" class="input length_3 mr2" name="condition_operator[]" value="{new_operator}" readonly>
-
-                                <label>值: </label>
-                                <input type="text" class="input length_3 mr2" name="condition_value[]" value="{new_value}">
-                                <a  onclick="delete_condition('{condition_id}')" class="btn btn-danger"><i class="iconfont icon-close"></i>删除</a>
-                            </div>
-                        </template>
-                        <td>
-                            <div id="conditions_container">
-                                <volist name="task_conditions" id="condition">
-                                    <div id="condition_{$condition['id']}" class="condition_item">
-                                        <label>字段: </label>
-                                        <input type="text" class="input length_3 mr2" name="condition_filter[]" value="{$condition['filter']}">
-
-                                        <label>条件: </label>
-                                        <input type="text" class="input length_3 mr2" name="condition_operator[]" value="{$condition['operator']}" readonly>
-
-                                        <label>值: </label>
-                                        <input type="text" class="input length_3 mr2" name="condition_value[]" value="{$condition['value']}">
-                                        <a  onclick="delete_condition('{$condition["id"]}')" class="btn btn-danger"><i class="iconfont icon-close"></i>删除</a>
-                                    </div>
-                                </volist>
-                            </div>
-                        </td>
-                        <td><div class="fun_tips"></div></td>
-                    </tr>
-
-                    <tr style="display: none;">
-                        <th>ID</th>
-                        <td>
-                            <input type="text" value="{$id}" name="task_id">
-                        </td>
-                        <td><div class="fun_tips"></div></td>
-                    </tr>
-
-
-                    <tr>
-                        <th>操作</th>
-                        <td>
-                            <button class="btn btn_submit J_ajax_submit_btn" type="submit">提 交</button>
-                        </td>
-                        <td><div class="fun_tips"></div></td>
-                    </tr>
-                </table>
-            </div>
-        </form>
-    </if>
-
-
-    <div class="h_a">设置字段映射</div>
-    <form class="J_ajaxForm"  action="{:U('Transport/Index/task_update_field')}" method="post" id="field_form">
-        <div class="table_full">
-            <table width="100%">
-                <col class="th" />
-                <col width="1000" />
-                <tr>
-                    <th>新增字段映射</th>
-                    <td>
-                        <label>内部字段名: </label>
-                        <input type="text" class="input length_3 mr2" name="new_field_name" value="">
-
-                        <label>外部名称: </label>
-                        <input type="text" class="input length_3 mr2" name="new_export_name" value="">
-
-                        <label>过滤处理器: </label>
-                        <input type="text" class="input length_3 mr2" name="new_filter" value="">
-
-                        <a class="btn btn-success" onclick="add_field()"><i class="iconfont icon-add1"></i>新增</a>
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-
-                <tr>
-                    <th>当前字段映射</th>
-                    <template id="tpl_field">
-                        <div id="condition_{field_id}" class="field_item">
-                            <label>内部字段名: </label>
-                            <input type="text" class="input length_3 mr2" name="field_field_name[]" value="{new_field_name}">
-
-                            <label>外部名称: </label>
-                            <input type="text" class="input length_3 mr2" name="field_export_name[]" value="{new_export_name}" >
-
-                            <label>过滤处理器: </label>
-                            <input type="text" class="input length_3 mr2" name="field_filter[]" value="{new_filter}">
-                            <a  onclick="delete_field('{field_id}')" class="btn btn-danger"><i class="iconfont icon-close"></i>删除</a>
-                        </div>
-                    </template>
-                    <td>
-                        <div id="fields_container">
-                            <volist name="task_fields" id="field">
-                                <div id="field_{$field['id']}" class="field_item">
-                                    <label>内部字段名: </label>
-                                    <input type="text" class="input length_3 mr2" name="field_field_name[]" value="{$field['field_name']}">
-
-                                    <label>外部名称: </label>
-                                    <input type="text" class="input length_3 mr2" name="field_export_name[]" value="{$field['export_name']}" >
-
-                                    <label>过滤处理器: </label>
-                                    <input type="text" class="input length_3 mr2" name="field_filter[]" value="{$field['filter']}">
-                                    <a  onclick="delete_field('{$field["id"]}')" class="btn btn-danger"><i class="iconfont icon-close"></i>删除</a>
-                                </div>
-                            </volist>
-                        </div>
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-
-                <tr style="display: none;">
-                    <th>ID</th>
-                    <td>
-                        <input type="text" value="{$id}" name="task_id">
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-
-
-                <tr>
-                    <th>操作</th>
-                    <td>
-                        <button class="btn btn_submit J_ajax_submit_btn" type="submit">提 交</button>
-                    </td>
-                    <td><div class="fun_tips"></div></td>
-                </tr>
-            </table>
-        </div>
-    </form>
-</div>
-<script src="{$config_siteurl}statics/js/common.js?v"></script>
-<script>
-    (function($){
-        //设置筛选条件
-
-        //添加筛选条件
-        window.addCondition = function(){
-            var $new_filter = $('#condition_form input[name=new_filter]');
-            var $new_operator = $('#condition_form select[name=new_operator]');
-            var $new_value = $('#condition_form input[name=new_value]');
-
-            var html = $('#tpl_condition').html();
-
-            var id = Date.now();
-
-            html = html.replace('{new_filter}', $new_filter.val()).replace('{new_operator}', $new_operator.val())
-                .replace('{new_value}', $new_value.val()).replace('{condition_id}', id).replace('{condition_id}', id);
-
-            $('#conditions_container').append(html);
-
-        }
-
-        window.delete_condition = function(condition_id){
-            $('#condition_' + condition_id).remove();
-        }
-    })(jQuery);
-</script>
-
-<script>
-    (function($){
-        //设置字段映射
-
-        //添加字段映射
-        window.add_field = function(){
-            var $new_field_name = $('#field_form input[name=new_field_name]');
-            var $new_export_name = $('#field_form input[name=new_export_name]');
-            var $new_filter = $('#field_form input[name=new_filter]');
-
-            var html = $('#tpl_field').html();
-
-            var id = Date.now();
-
-            html = html.replace('{new_field_name}', $new_field_name.val()).replace('{new_export_name}', $new_export_name.val())
-                .replace('{new_filter}', $new_filter.val()).replace('{field_id}', id).replace('{field_id}', id);
-
-            $('#fields_container').append(html);
-
-        }
-
-        window.delete_field = function(field_id){
-            $('#field_' + field_id).remove();
-        }
-    })(jQuery);
-</script>
-</body>
-</html>

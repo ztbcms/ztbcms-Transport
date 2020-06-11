@@ -1,82 +1,140 @@
-<Admintemplate file="Common/Head"/>
-<body class="J_scroll_fixed">
-<div class="wrap">
+<extend name="../../Admin/View/Common/element_layout"/>
 
-    <Admintemplate file="Common/Nav"/>
+<block name="content">
+    <div id="app" style="padding: 8px;" v-cloak>
+        <el-card>
+            <h3>执行记录</h3>
+            <el-table
+                :key="tableKey"
+                :data="list"
+                border
+                fit
+                highlight-current-row
+                style="width: 100%;"
+            >
+                <el-table-column label="ID" align="center">
+                    <template slot-scope="scope">
+                        <span>{{ scope.row.id }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="计划标题" align="center">
+                    <template slot-scope="scope">
+                        <span>{{ scope.row.title }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="备注" align="center">
+                    <template slot-scope="scope">
+                        <span>{{ scope.row.remark }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="文件名" align="center">
+                    <template slot-scope="scope">
+                        <span>{{ scope.row.filename }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="创建时间" align="center">
+                    <template slot-scope="scope">
+                        <span>{{ scope.row.inputtime | parseTime('{y}-{m}-{d} {h}:{i}:{s}')  }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="操作" align="center" width="230" class-name="small-padding fixed-width">
+                    <template slot-scope="scope">
+                        <el-button type="primary" size="mini" @click="toExec(scope.row.id)">
+                            立即执行
+                        </el-button>
+                        <el-button size="mini" type="primary"
+                                   @click="toView(scope.row.id)">
+                            预览
+                        </el-button>
+                    </template>
+                </el-table-column>
 
-    <div class="table_list">
-        <table width="100%">
-            <thead>
-            <tr>
-                <td>ID</td>
-                <td>计划标题</td>
-                <td>备注</td>
-                <td>文件名</td>
-                <td>创建时间</td>
-                <td>操作</td>
-            </tr>
-            </thead>
+            </el-table>
 
-            <volist name="data" id="r">
-                <?php
-                $modified = $r['modified_time'] ? date("Y-m-d H:i",$r['modified_time']) : '-';
-                $next = $r['next_time'] ? date("Y-m-d H:i",$r['next_time']) : '-';
-                ?>
-                <tr>
-                    <td>{$r.id}</td>
-                    <td>{$r.title}</td>
-                    <td>{$r.remark}</td>
-                    <td>
-                        <?php
-                        $_task = M('TransportTask')->where(['id' => $r['task_id']])->find();
-                        ?>
-                        <if condition="$_task['type'] == 1">
-                                <a href="{$r['filename']}">点击下载导入Excel文件</a>
-                            <else/>
-                                {$r['filename']}
-                        </if>
-                    </td>
-                    <td>
-                      {:date('Y-m-d H:i:s', $r['inputtime'])}
-                    </td>
-                    <td>
-                        <a href="{:U('Transport/Index/task_exec', ['task_log_id' => $r['id']])}" target="_blank">立即执行</a>
-                        |<a href="{:U('Transport/Index/task_exec', ['task_log_id' => $r['id'], 'preview' => 1])}" target="_blank" style="margin-left: 4px;">预览</a>
+            <div class="pagination-container">
+                <el-pagination
+                    background
+                    layout="prev, pager, next, jumper"
+                    :total="listQuery.total"
+                    v-show="listQuery.total>0"
+                    :current-page.sync="listQuery.page"
+                    :page-size.sync="listQuery.limit"
+                    @current-change="getList"
+                >
+                </el-pagination>
+            </div>
 
-                    </td>
-                </tr>
-            </volist>
-        </table>
-        <div class="p10"><div class="pages"> {$Page} </div> </div>
+        </el-card>
     </div>
-</div>
-<script src="{$config_siteurl}statics/js/common.js?v"></script>
-<script>
-    $(function(){
-        $('#J_time_select').on('change', function(){
-            $('#J_time_'+ $(this).val()).show().siblings('.J_time_item').hide();
-        });
 
-        var lock = false;
-        $('a.J_cron_back').on('click', function(e){
-            e.preventDefault();
-            var $this = $(this);
-            if(lock) {
-                return false;
-            }
-            lock = true;
+    <style>
+        .filter-container {
+            padding-bottom: 10px;
+        }
 
-            $.post(this.href, function(data) {
-                lock = false;
-                if(data.state === 'success') {
-                    $( '<span class="tips_success fr">' + data.message + '</span>' ).insertAfter($this).fadeIn( 'fast' );
-                    reloadPage(window);
-                }else if( data.state === 'fail' ) {
-                    Wind.dialog.alert(data.message);
-                }
-            }, 'json');
-        });
-    });
-</script>
-</body>
-</html>
+        .pagination-container {
+            padding: 32px 16px;
+        }
+    </style>
+
+    <script>
+        $(document).ready(function () {
+            new Vue({
+                el: '#app',
+                data: {
+                    tableKey: 0,
+                    list: [],
+                    listQuery: {
+                        page: 1,
+                        limit: 20,
+                        total: 0
+                    },
+                },
+                watch: {},
+                filters: {
+                    parseTime: function (time, format) {
+                        return Ztbcms.formatTime(time, format)
+                    },
+                },
+                methods: {
+                    //立即执行
+                    toExec(id){
+                        var url = '/Transport/Index/task_exec';
+                        if(id){
+                            url = url + '?task_log_id=' + id
+                        }
+                        window.open(url)
+                    },
+                    //预览
+                    toView(id){
+                        var url = '/Transport/Index/task_exec';
+                        if(id){
+                            url = url + '?task_log_id=' + id + '&preview=1'
+                        }
+                        window.open(url)
+                    },
+                    getList: function () {
+                        var that = this;
+                        $.ajax({
+                            url:"{:U('task_logs_get')}",
+                            dataType:"json",
+                            data: that.listQuery,
+                            type:"get",
+                            success(res){
+                                that.list = res.data.items;
+                                that.listQuery.total = res.data.total_items;
+                                that.listQuery.limit = res.data.limit;
+                                that.listQuery.page = res.data.page;
+                            }
+                        })
+                    },
+                },
+                mounted: function () {
+                    this.getList();
+                },
+
+            })
+        })
+    </script>
+</block>
+

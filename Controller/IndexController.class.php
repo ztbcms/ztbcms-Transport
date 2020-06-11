@@ -8,10 +8,14 @@ namespace Transport\Controller;
 
 
 use Common\Controller\AdminBase;
+use Queue\Libs\Queue;
 use Transport\Core\Export;
 use Transport\Core\ExportField;
 use Transport\Core\Import;
+use Transport\Job\TransportJob;
+use Transport\Model\TransportTaskLogModel;
 use Transport\Model\TransportTaskModel;
+use Transport\Service\TransportService;
 
 /**
  * Class IndexController
@@ -33,10 +37,37 @@ class IndexController extends AdminBase {
      * 任务列表页
      */
     function index() {
+        if(IS_AJAX){
+            $TransportTaskModel = new TransportTaskModel;
+            $_page = I('page',1);
+            $_limit = I('limit',1);
+            //获取总记录数
+            $count = $TransportTaskModel->count();
+            //总页数
+            $total_page = ceil($count / $_limit);
+            $page = $this->page($count, $_limit, $_page);
+
+            //获取到的分页数据
+            $data = $TransportTaskModel->limit($page->firstRow . ',' . $page->listRows)
+                ->order('id desc')->select();
+            $this->ajaxReturn(self::createReturnList(true, $data, $_page, $_limit, $count, $total_page));
+        }
         $data = $this->db->select();
         $this->assign('data', $data);
 
         $this->display();
+    }
+
+    function getEditTaskParam(){
+        //返回模型列表
+        $list = M('Model')->select();
+        $newList = [];
+        foreach ($list as $item){
+            $obj['value'] = $item['tablename'];
+            $obj['label'] = $item['name'];
+            $newList[] = $obj;
+        }
+        $this->ajaxReturn(self::createReturn(true,$newList));
     }
 
     /**
@@ -53,10 +84,10 @@ class IndexController extends AdminBase {
         $data = I('post.');
 
         if ($this->db->create($data)) {
-            $this->db->add();
-            $this->success('创建成功');
+            $id = $this->db->add();
+            $this->ajaxReturn(self::createReturn(true, ['id' => $id], '创建成功'));
         } else {
-            $this->error($this->db->getDbError());
+            $this->ajaxReturn(self::createReturn(false, null, '创建失败'));
         }
 
     }
@@ -73,6 +104,17 @@ class IndexController extends AdminBase {
      * 编辑任务页
      */
     function task_edit_index() {
+        if(IS_AJAX){
+            $task_id = I('get.id');
+            $task = $this->db->where(['id' => $task_id])->find();
+            $task_conditions = M('TransportCondition')->where(['task_id' => $task_id])->select();
+            $task_fields = M('TransportField')->where(['task_id' => $task_id])->select();
+            $data['task'] = $task;
+            $data['task_conditions'] = $task_conditions ?: [];
+            $data['task_fields'] = $task_fields ?: [];
+            $this->ajaxReturn(self::createReturn(true,$data));
+        }
+
         $task_id = I('get.id');
         $task = $this->db->where(['id' => $task_id])->find();
         $this->assign($task);
@@ -101,6 +143,28 @@ class IndexController extends AdminBase {
      * 更新筛选条件信息
      */
     function task_update_condition() {
+        if(IS_AJAX){
+            $task_id = I('post.task_id');
+            $list = I('post.list');
+            //先清空后加入
+            M('TransportCondition')->where(['task_id' => $task_id])->delete();
+
+            $batch_data = [];
+            foreach ($list as $index => $f) {
+                $batch_data[] = [
+                    'task_id' => $task_id,
+                    'filter' => $f['filter'],
+                    'operator' => $f['operator'],
+                    'value' => $f['value'],
+                ];
+            }
+            $res = false;
+            foreach ($batch_data as $index => $data) {
+                $res = M('TransportCondition')->add($data);
+            }
+            $this->ajaxReturn(self::createReturn(true,$res,'操作成功'));
+        }
+
         $task_id = I('post.task_id');
         $filter = I('post.condition_filter');
         $operator = I('post.condition_operator');
@@ -130,6 +194,28 @@ class IndexController extends AdminBase {
      * 更新设置字段映射
      */
     function task_update_field() {
+        if(IS_AJAX){
+            $task_id = I('post.task_id');
+            $list = I('post.list');
+            //先清空后加入
+            M('TransportField')->where(['task_id' => $task_id])->delete();
+
+            $batch_data = [];
+            foreach ($list as $index => $f) {
+                $batch_data[] = [
+                    'task_id' => $task_id,
+                    'field_name' => $f['field_name'],
+                    'export_name' => $f['export_name'],
+                    'filter' => $f['filter'],
+                ];
+            }
+            $res = false;
+            foreach ($batch_data as $index => $data) {
+                $res = M('TransportField')->add($data);
+            }
+            $this->ajaxReturn(self::createReturn(true,$res,'操作成功'));
+        }
+
         $task_id = I('post.task_id');
         $field_name = I('post.field_field_name');
         $export_name = I('post.field_export_name');
@@ -159,6 +245,11 @@ class IndexController extends AdminBase {
      * 执行任务预览页
      */
     function task_exec_index() {
+        if(IS_AJAX){
+            $task_id = I('get.id');
+            $task = $this->db->where(['id' => $task_id])->find();
+            $this->ajaxReturn(self::createReturn(true,$task));
+        }
         $task_id = I('get.id');
         $task = $this->db->where(['id' => $task_id])->find();
         $this->assign($task);
@@ -256,7 +347,7 @@ class IndexController extends AdminBase {
             } else {
                 //开始导入
                 $import->import();
-                $this->success('导入成功');
+                $this->ajaxReturn(createReturn(true,'','导入成功'));
             }
         }
     }
@@ -279,21 +370,122 @@ class IndexController extends AdminBase {
     }
 
     /**
+     * 任务执行日志数据
+     */
+    function task_logs_get() {
+        $TransportTaskLogModel = new TransportTaskLogModel;
+        $_page = I('page',1);
+        $_limit = I('limit',10);
+        //获取总记录数
+        $count = $TransportTaskLogModel->count();
+        //总页数
+        $total_page = ceil($count / $_limit);
+        $page = $this->page($count, $_limit, $_page);
+
+        //获取到的分页数据
+        $data = $TransportTaskLogModel->limit($page->firstRow . ',' . $page->listRows)
+            ->order('id desc')->select();
+        $this->ajaxReturn(self::createReturnList(true, $data, $_page, $_limit, $count, $total_page));
+
+    }
+
+    /**
      * 创建任务执行日志
      */
     function task_log_create() {
         $data = I('post.');
-
         $data['inputtime'] = time();
-        $id = M('TransportTaskLog')->data($data)->add();
+        $TransportTaskLogModel = new TransportTaskLogModel();
+
+        // 校验上传文件
+        $type = $data['type'];
+        $filename = $data['filename'];
+        if($type == TransportTaskModel::TYPE_IMPORT && empty($filename)){
+            $this->ajaxReturn(self::createReturn(false,null,'请上传文件'));
+            return;
+        }
+        //调整上传文件链接
+        $urlObj = parse_url($filename);
+        $data['filename'] = $urlObj['path'];
+
+        $id = $TransportTaskLogModel->data($data)->add();
         if ($id) {
             //跳转
-            $this->redirect('task_logs');
-            $this->success('创建任务执行日志成功', U('Transport/Index/task_logs'));
-
+            $job = new TransportJob($id);
+            Queue::getInstance()->push('Transport', $job);
+            $this->ajaxReturn(self::createReturn(true,[
+                'task_log_id' => $id
+            ],'创建任务执行日志成功'));
         } else {
-            $this->error('创建任务执行日志失败');
+            $this->ajaxReturn(self::createReturn(false,null,'创建任务执行日志失败'));
         }
 
     }
+
+    /**
+     * 任务执行详情页
+     */
+    public function task_exec_info($id){
+        $TransportTaskModel = new TransportTaskModel();
+        $TransportTaskLogModel = new TransportTaskLogModel();
+        if(IS_AJAX){
+            $task_log = $TransportTaskLogModel->where(['id'=>$id])->find();
+            $task = $TransportTaskModel->where(['id'=>$task_log['task_id']])->find();
+            $this->ajaxReturn(self::createReturn(true,['task'=>$task,'task_log'=>$task_log]));
+        }
+//
+//        $data = I('post.');
+//        $data['inputtime'] = time();
+//        // 校验上传文件
+//        $type = $data['type'];
+//        $filename = $data['filename'];
+//        if($type == TransportTaskModel::TYPE_IMPORT && empty($filename)){
+//            $this->error('请上传文件');
+//        }
+//        // 写入记录
+//        $id = $TransportTaskLogModel->data($data)->add();
+//        $task = $TransportTaskLogModel->where(['id'=>$id])->find();
+//        $task_ = $TransportTaskModel->where(['id'=>$task['task_id']])->find();
+//        $this->assign($task);
+//        $this->assign($task_);
+        $this->assign('task_log_id',$id);
+        $this->display();
+    }
+
+
+    /**
+     * 下载示例文件
+     */
+    public function down(){
+        $filename = '示例文件';
+        $strTable = '<table width="500" border="1">';
+        $strTable .= '<tr>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="100">name</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;" width="100">sex</td>';
+        $strTable .= '</tr>';
+
+        $strTable .= '<tr>';
+        $strTable .= '<td style="text-align:center;font-size:12px;">&nbsp;小李</td>';
+        $strTable .= '<td style="text-align:center;font-size:12px;">男</td>';
+        $strTable .= '</tr>';
+
+        header("Content-type: application/vnd.ms-excel");
+        header("Content-Type: application/force-download");
+        header("Content-Disposition: attachment; filename=" . $filename . ".xls");
+        header('Expires:0');
+        header('Pragma:public');
+        echo '<html><meta http-equiv="Content-Type" content="text/html; charset=utf-8" />' . $strTable . '</html>';
+    }
+
+    /**
+     * 获取进度条数值
+     * task_log_id 计划日志id
+     */
+    public function getSpeed(){
+        $task_log_id = I('get.task_log_id');
+        $res =  TransportService::getSpeed($task_log_id);
+        $this->ajaxReturn($res);
+    }
+
+
 }
