@@ -26,6 +26,9 @@ class TestController extends Base {
     }
 
 
+    /**
+     * 导出
+     */
     function testExport(){
 
         $export = new Export();
@@ -55,6 +58,9 @@ class TestController extends Base {
     }
 
 
+    /**
+     * 导入
+     */
     function testImport(){
         $import = new Import();
 

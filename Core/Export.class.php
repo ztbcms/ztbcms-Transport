@@ -11,7 +11,7 @@ namespace Transport\Core;
  *
  * @package Transport\Core
  */
-class Export {
+class Export extends Transport {
 
     //导出模型名称(一般为不含前缀的表名)
     protected $model = '';
@@ -29,6 +29,9 @@ class Export {
     //导出表格内容
     protected $_content = '';
 
+    //导出的表头
+    protected $excel_header_data = [];
+
     /**
      * 源数据
      *
@@ -42,17 +45,13 @@ class Export {
      * @var null|\PHPExcel
      */
     private $phpexcel = null;
-    /**
-     * Excel数据
-     *
-     * @var array
-     */
-    private $excel_data = [];
 
-    public function __construct() {
+    public function __construct($task_log_id = '') {
         include(APP_PATH . '/Transport/Libs/PHPExcel.php');
 
         $this->phpexcel = new \PHPExcel();
+
+        $this->task_log_id = $task_log_id;
     }
 
     /**
@@ -105,15 +104,11 @@ class Export {
      */
     private function exportHeaders($fields = []) {
         $content_header = '<tr>';
-        $excel_headers = [];
         foreach ($fields as $index => $field) {
             $content_header .= '<th>' . $this->exportHeader($field) . '</th>';
-            $excel_headers[] = $this->exportHeader($field);
         }
 
         $content_header .= '</tr>';
-
-        $this->excel_data[] = $excel_headers;
 
         return $content_header;
     }
@@ -137,16 +132,12 @@ class Export {
      */
     private function exportRow($row_data = []) {
         $row = '<tr>';
-        $fields = $this->getFields();
 
-        $excel_row = [];
-        foreach ($fields as $index => $field) {
-            $row .= '<td>' . $this->exportCell($field, $row_data) . '</td>';
-            $excel_row[] = $this->exportCell($field, $row_data);
+        foreach ($row_data as $index => $cell_data) {
+            $row .= '<td>' . $cell_data . '</td>';
         }
 
         $row .= '</tr>';
-        $this->excel_data[] = $excel_row;
 
         return $row;
     }
@@ -158,7 +149,7 @@ class Export {
      */
     private function exportRows() {
         $content_rows = '';
-        $data = $this->getData();
+        $data = $this->getExcelData();
 
         foreach ($data as $index => $row_data) {
             $content_rows .= $this->exportRow($row_data);
@@ -180,6 +171,8 @@ class Export {
             $this->setData($data);
         }
 
+        $this->loadExcelData();
+
         $this->_content .= '<table>';
         $this->_content .= $this->exportHeaders($this->fields);
         $this->_content .= $this->exportRows();
@@ -188,18 +181,50 @@ class Export {
         return $this->_content;
     }
 
+    private function loadExcelData(){
+        $this->loadHeaders();
+        $this->loadRows();
+    }
+
     /**
      * 生成 XLS 文件
      */
     public function exportXls() {
+        $this->onStartTransport();
 
-        $this->exportTable();
+        //先提取数据
+        $this->onStartLoadData();
+        $data = $this->getData();
+        if (empty($data)) {
+            $data = $this->getExportData();
+            $this->setData($data);
+        }
+
+        //整理数据到excel表格
+        $this->loadExcelData();
+
+        $this->onFinishLoadData();
+
+        //开始处理数据
+        $this->onStartHandleData();
 
         //设置表格
         $this->phpexcel->getProperties()->setCreator($this->filterString)->setLastModifiedBy('ZTBCMS')->setTitle("Office 2007 XLSX Document")->setSubject("Office 2007 XLSX Document")->setDescription("Document for Office 2007 XLSX, generated using PHP classes.")->setKeywords("office 2007 openxml php")->setCategory("ZTBCMS");
 
+        $header_data = $this->excel_header_data;
+
+        $excel_data = $this->getExcelData();
+
         //填充数据
-        foreach ($this->excel_data as $key => $row) {
+        $export_data = [$header_data];
+        foreach ($excel_data as $index => $row){
+            $export_data []= $row;
+        }
+
+        foreach ($export_data as $key => $row) {
+
+            $this->onStartHandleRowData();
+
             $num = $key + 1;
             $i = 0;
             foreach ($row as $key2 => $value2) {
@@ -208,6 +233,8 @@ class Export {
                     $value2);
                 $i++;
             }
+
+            $this->onFinishHandlRowData();
         }
 
         //设置表格并输出
@@ -222,8 +249,14 @@ class Export {
         header('Pragma: public'); // HTTP/1.0
         $objWriter = \PHPExcel_IOFactory::createWriter($this->phpexcel, 'Excel5');
         $objWriter->save('php://output');
+
+        $this->onFinishHandleData();
+
+        $this->onFinishTransport();
         exit;
     }
+
+
 
     /**
      * @return array
@@ -307,6 +340,42 @@ class Export {
      */
     public function setCondition($condition) {
         $this->condition = $condition;
+    }
+
+    private function loadHeaders(){
+        $header_data = [];
+        $fields = $this->getFields();
+        foreach ($fields as $index => $field) {
+            $header_data []= $this->exportHeader($field);
+        }
+
+        $this->excel_header_data = $header_data;
+
+        return $header_data;
+    }
+
+    private function loadRows() {
+        $rows = [];
+        $data = $this->getData();
+
+        foreach ($data as $index => $row_data) {
+            $rows []= $this->loadRow($row_data);
+        }
+
+        $this->setExcelData($rows);
+
+        return $rows;
+    }
+
+    private function loadRow($row_data){
+        $row = [];
+        $fields = $this->getFields();
+
+        foreach ($fields as $index => $field) {
+            $row []= $this->exportCell($field, $row_data);
+        }
+
+        return $row;
     }
 
 }

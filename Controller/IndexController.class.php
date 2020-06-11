@@ -189,7 +189,7 @@ class IndexController extends AdminBase {
         if ($task['type'] == TransportTaskModel::TYPE_EXPORT) {
             //导出任务处理
 
-            $export = new Export();
+            $export = new Export($task_log_id);
             $filename = empty($task_log['filename']) ? $task['title'] . date('YmdHis', time()) : $task_log['filename'];
             $export->setFilename($filename); //导出文件名
             $export->setModel($task['model']); //导出模型
@@ -236,7 +236,7 @@ class IndexController extends AdminBase {
             }
         } else {
             //导入
-            $import = new Import();
+            $import = new Import($task_log_id);
 
             $import->setModel($task['model']);
 

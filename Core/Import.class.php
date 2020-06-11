@@ -11,7 +11,7 @@ namespace Transport\Core;
  *
  * @package Transport\Core
  */
-class Import {
+class Import extends Transport {
 
     //模型名称(一般为不含前缀的表名)
     protected $model = '';
@@ -34,44 +34,54 @@ class Import {
      * @var null|\PHPExcel
      */
     private $phpexcel = null;
-    /**
-     * Excel数据
-     *
-     * @var array
-     */
-    private $excel_data = [];
 
-    public function __construct() {
+
+    public function __construct($task_log_id = '') {
         include(APP_PATH . '/Transport/Libs/PHPExcel.php');
 
         $this->phpexcel = new \PHPExcel();
+
+        $this->task_log_id = $task_log_id;
     }
 
     /**
      * 导入表格
      */
     function importTable() {
+        $this->onStartHandleData();
         $this->importHeaders();
         $this->importRows();
+        $this->onFinishHandleData();
     }
 
     /**
      * 导入数据
      */
     public function importData() {
+        $this->onStartHandleData();
+
         $db = M($this->getModel());
         if (!empty($this->data)) {
             foreach ($this->data as $index => $data) {
                 //TODO 可以配置导入策略：1. 若有相同，覆盖导入 2. 若有相同忽略导入 （目前默认1,以主键为唯一表示）
                 //TODO 检测哪一些导入成功，哪一些失败了
 
+                $this->onStartHandleRowData();
                 $pk = $db->getPk();
                 if (isset($data[$pk])) {
                     unset($data[$pk]);
                 }
-                $db->add($data);
+                $res = $db->add($data);
+                if ($res) {
+                    $this->success_data[] = $data;
+                } else {
+                    $this->fail_data[] = $data;
+                }
+                $this->onFinishHandlRowData();
             }
         }
+
+        $this->onFinishHandleData();
     }
 
     /**
@@ -80,7 +90,10 @@ class Import {
      * @return mixed
      */
     private function importHeaders() {
-        return array_shift($this->excel_data);
+        $excel_data = $this->getExcelData();
+        array_shift($excel_data);
+        $this->setExcelData($excel_data);
+        return $excel_data;
     }
 
     /**
@@ -122,7 +135,8 @@ class Import {
      * @return array
      */
     private function importRows() {
-        foreach ($this->excel_data as $index => $row_data) {
+        $excel_data = $this->getExcelData();
+        foreach ($excel_data as $index => $row_data) {
             $this->data[] = $this->importRow($row_data);
         }
 
@@ -133,7 +147,8 @@ class Import {
      * 加载Excel数据
      */
     public function loadExcelData() {
-        if (empty($this->excel_data)) {
+        $this->onStartLoadData();
+        if (empty($this->getExcelData())) {
             $objReader = \PHPExcel_IOFactory::createReader('Excel5');
             $objPHPExcel = $objReader->load($this->filename);
             $objWorksheet = $objPHPExcel->getActiveSheet();
@@ -147,8 +162,10 @@ class Import {
                 }
             }
 
-            $this->setImportData($excelData);
+            $this->setExcelData($excelData);
         }
+
+        $this->onFinishLoadData();
     }
 
     /**
@@ -158,26 +175,35 @@ class Import {
         $content = '<table>';
 
         foreach ($this->data as $index => $row) {
-            $content .= '<tr>';
 
+            $this->onStartHandleRowData();
+
+            $content .= '<tr>';
             foreach ($row as $i => $cell) {
                 $content .= '<td>' . $cell . '</td>';
             }
             $content .= '</tr>';
+
+            $this->success_data[] = $row;
+
+            $this->onFinishHandlRowData();
         }
         $content .= '</table>';
         echo $content;
-        exit();
     }
 
     /**
      * 导入XLS数据，但不插入到数据库，做阅览
      */
     public function exportTable() {
+        $this->onStartTransport();
+
         $this->loadExcelData();
         $this->importTable();
 
         $this->previewTable();
+        $this->onFinishTransport();
+        exit();
     }
 
 
@@ -185,11 +211,12 @@ class Import {
      * 开始导入
      */
     public function import() {
-
+        $this->onStartTransport();
         $this->loadExcelData();
         $this->importTable();
 
         $this->importData();
+        $this->onFinishTransport();
     }
 
     /**
@@ -218,24 +245,6 @@ class Import {
      */
     public function setFields(array $fields) {
         $this->fields = $fields;
-    }
-
-    /**
-     * 获取数据
-     *
-     * @return array|mixed
-     */
-    public function getImportData() {
-        return $this->excel_data;
-    }
-
-    /**
-     * 设置导入数据
-     *
-     * @param array $excel_data
-     */
-    public function setImportData(array $excel_data) {
-        $this->excel_data = $excel_data;
     }
 
     /**

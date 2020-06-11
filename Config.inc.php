@@ -12,7 +12,7 @@ return array(
 	//模块简介
 	'introduce' => '导入与导出Excel',
 	//模块介绍地址
-	'address' => 'http://ztbcms.com',
+	'address' => 'http://doc.ztbcms.com/module/transport/',
 	//模块作者
 	'author' => 'Jayin',
 	//作者地址
@@ -21,8 +21,8 @@ return array(
 	'authoremail' => 'tonjayin@gmail.com',
 	//版本号，请不要带除数字外的其他字符
 	'version' => '1.0.1.0',
-	//适配最低ZtbFCMS版本，
-	'adaptation' => '2.0.0.0',
+	//适配最低ZtbCMS版本，
+	'adaptation' => '3.0.0.0',
 	//签名
 	'sign' => '2fa528afab8210bbcaf5ce73e03a0555',
 	//依赖模块
