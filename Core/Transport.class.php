@@ -137,12 +137,14 @@ class Transport {
             $log = M('TransportTaskLog')->where(['id' => $this->task_log_id])->find();
             $now = time();
             $duration = $now - $log['start_transport_time'];
-            M('TransportTaskLog')->where(['id' => $this->task_log_id])->save([
-                'process_status' => TransportTaskLogModel::PROCESS_STATUS_FINISH,
-                'end_transport_time' => $now,
-                'use_time' => $duration,
-                'update_time' => time()
-            ]);
+            if (!empty($this->task_log_id)) {
+                M('TransportTaskLog')->where(['id' => $this->task_log_id])->save([
+                    'process_status'     => TransportTaskLogModel::PROCESS_STATUS_FINISH,
+                    'end_transport_time' => $now,
+                    'use_time'           => $duration,
+                    'update_time'        => time()
+                ]);
+            }
         }
     }
 

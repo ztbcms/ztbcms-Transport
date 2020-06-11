@@ -402,11 +402,13 @@ class IndexController extends AdminBase {
         $type = $data['type'];
         $filename = $data['filename'];
         if($type == TransportTaskModel::TYPE_IMPORT && empty($filename)){
-            $this->error('请上传文件');
+            $this->ajaxReturn(self::createReturn(false,null,'请上传文件'));
+            return;
         }
-//        if($type == TransportTaskModel::TYPE_EXPORT && empty($filename)){
-//            $this->error('请输入导出文件名');
-//        }
+        //调整上传文件链接
+        $urlObj = parse_url($filename);
+        $data['filename'] = $urlObj['path'];
+
         $id = $TransportTaskLogModel->data($data)->add();
         if ($id) {
             //跳转

@@ -37,7 +37,7 @@ class Import extends Transport {
 
 
     public function __construct($task_log_id = '') {
-        include(APP_PATH . '/Transport/Libs/PHPExcel.php');
+        include_once( APP_PATH . '/Transport/Libs/PHPExcel.php');
 
         $this->phpexcel = new \PHPExcel();
 
