@@ -20,14 +20,14 @@ return array(
 	//作者邮箱
 	'authoremail' => 'tonjayin@gmail.com',
 	//版本号，请不要带除数字外的其他字符
-	'version' => '1.0.1.0',
+	'version' => '2.0.0.0',
 	//适配最低ZtbCMS版本，
 	'adaptation' => '3.0.0.0',
 	//签名
 	'sign' => '2fa528afab8210bbcaf5ce73e03a0555',
 	//依赖模块
 	'depend' => array(
-	    'Cron'
+	    'Queue'
     ),
 	//行为注册
 	'tags' => array(),

@@ -347,8 +347,7 @@ class IndexController extends AdminBase {
             } else {
                 //开始导入
                 $import->import();
-//                $this->ajaxReturn(createReturn(true,'','导入成功'));
-                $this->success('导入成功');
+                $this->ajaxReturn(createReturn(true,'','导入成功'));
             }
         }
     }
