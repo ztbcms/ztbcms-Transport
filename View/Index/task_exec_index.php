@@ -1,6 +1,11 @@
 <extend name="../../Admin/View/Common/element_layout"/>
 
 <block name="content">
+    <style>
+        .el-upload-list {
+            max-width: 300px;
+        }
+    </style>
     <div id="app" style="padding: 8px;" v-cloak>
         <el-card>
             <h3>执行任务</h3>
