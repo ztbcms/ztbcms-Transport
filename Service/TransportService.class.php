@@ -194,11 +194,11 @@ class TransportService extends BaseService
         $export->setFields($fields);
 
         $url = $export->exportXlsSrc($task_log['filename'],$task['title']);
+
         // 保存文件
         if(!empty($url)){
             $TransportTaskLogModel->where(['id' => $task_log['id']])->save(['result' => 2,'update_time'=>time(),'result_file'=>$url]);
         }
-        \Think\Log::record($url);
-//        return $url;
+        return self::createReturn(true, ['result_file' => $url]);
     }
 }

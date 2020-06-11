@@ -50,7 +50,7 @@ class Export extends Transport {
     private $phpexcel = null;
 
     public function __construct($task_log_id = '') {
-        include(APP_PATH . '/Transport/Libs/PHPExcel.php');
+        include_once(APP_PATH . '/Transport/Libs/PHPExcel.php');
 
         $this->phpexcel = new \PHPExcel();
 
@@ -221,7 +221,6 @@ class Export extends Transport {
         foreach ($excel_data as $index => $row){
             $export_data []= $row;
         }
-
         foreach ($export_data as $key => $row) {
 
             $this->onStartHandleRowData();
@@ -252,8 +251,6 @@ class Export extends Transport {
             $this->savePath = 'php://output';
         }
 
-
-
         $objWriter = \PHPExcel_IOFactory::createWriter($this->phpexcel, 'Excel5');
         $objWriter->save($this->savePath);
 
@@ -281,7 +278,7 @@ class Export extends Transport {
         // 检查上传目录
         if (!is_dir($absolute_save_path)) {
             // 尝试创建目录
-            if (!mkdir($absolute_save_path, 0666, true)) {
+            if (!mkdir($absolute_save_path, 0766, true)) {
                 $this->error = '目录 ' . $savePath . ' 无法创建';
                 throw_exception('目录 ' . $savePath . ' 无法创建');
             }

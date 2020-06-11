@@ -105,7 +105,6 @@
                     toLog(){
                         var that = this;
                         that.form.task_id = that.task_id
-                        that.form.id = ""
                         $.ajax({
                             url:"{:U('Transport/Index/task_log_create')}",
                             type:"POST",
@@ -134,10 +133,11 @@
                             type:"post",
                             data:that.form,
                             success(res){
+                                console.log(res.data)
                                 if(res.status){
                                     layer.msg(res.msg, {time: 1000}, function(){
                                         // 跳转到详情中
-                                        Ztbcms.openNewIframeByUrl('执行任务', '/Transport/Index/task_exec_info?id='+res.data)
+                                        Ztbcms.openNewIframeByUrl('执行任务', '/Transport/Index/task_exec_info?id='+res.data.task_log_id)
                                     });
                                 }else{
                                     layer.msg(res.msg);

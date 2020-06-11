@@ -8,9 +8,11 @@ namespace Transport\Controller;
 
 
 use Common\Controller\AdminBase;
+use Queue\Libs\Queue;
 use Transport\Core\Export;
 use Transport\Core\ExportField;
 use Transport\Core\Import;
+use Transport\Job\TransportJob;
 use Transport\Model\TransportTaskLogModel;
 use Transport\Model\TransportTaskModel;
 use Transport\Service\TransportService;
@@ -392,22 +394,6 @@ class IndexController extends AdminBase {
      * 创建任务执行日志
      */
     function task_log_create() {
-        if(IS_AJAX){
-            $data = I('post.');
-            $data['inputtime'] = time();
-            $TransportTaskLogModel = new TransportTaskLogModel();
-            // 校验上传文件
-            $type = $data['type'];
-            if($type == TransportTaskModel::TYPE_IMPORT && empty($data['filename'])){
-                $this->ajaxReturn(self::createReturn(false,'','请上传文件'));
-            }
-            $id = $TransportTaskLogModel->data($data)->add();
-            if ($id) {
-                $this->ajaxReturn(self::createReturn(true,$id,'创建任务执行日志成功'));
-            }else{
-                $this->ajaxReturn(self::createReturn(false,'','创建任务执行日志失败'));
-            }
-        }
         $data = I('post.');
         $data['inputtime'] = time();
         $TransportTaskLogModel = new TransportTaskLogModel();
@@ -424,10 +410,13 @@ class IndexController extends AdminBase {
         $id = $TransportTaskLogModel->data($data)->add();
         if ($id) {
             //跳转
-            $this->redirect('task_logs');
-            $this->success('创建任务执行日志成功', U('Transport/Index/task_logs'));
+            $job = new TransportJob($id);
+            Queue::getInstance()->push('Transport', $job);
+            $this->ajaxReturn(self::createReturn(true,[
+                'task_log_id' => $id
+            ],'创建任务执行日志成功'));
         } else {
-            $this->error('创建任务执行日志失败');
+            $this->ajaxReturn(self::createReturn(false,null,'创建任务执行日志失败'));
         }
 
     }
